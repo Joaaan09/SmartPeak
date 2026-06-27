@@ -67,6 +67,46 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-27 · Arranque MERN: TypeScript, monorepo client/server, JWT, onboarding de 5 pasos
+
+- **Decisión (consultada al usuario):**
+  - **TypeScript** en todo el stack (client y server), no JS puro.
+  - **Monorepo** simple `client/` + `server/` con un `package.json` raíz que orquesta ambos
+    vía `concurrently` (`npm run dev` levanta los dos). Sin workspaces formales (innecesario aún).
+  - **Sesión con JWT**: access token de 15m **en memoria** en el cliente (no localStorage) +
+    refresh de 30d en **cookie httpOnly** (`sameSite lax`, `secure` en prod, `path /api/auth`).
+  - **Onboarding completo de 5 pasos** en el registro: Cuenta · Perfil (nombre, sexo, fecha
+    nacim.) · Objetivo/rol · Físicos (altura, peso, peso objetivo) · Listo.
+- **Motivo:** TS da seguridad de tipos en los modelos biométricos y en el contrato API (caro de
+  revertir luego). JWT encaja con el uso mayoritario en móvil y con el Atajo de iOS que hace
+  POST al backend. Recoger sexo/edad/físicos en el alta permite **baselines reales de readiness
+  desde el día 1** y da el tono premium pedido. El rol es editable luego (`PATCH /users/me`).
+- **Alternativas descartadas:** JS puro (sin tipos en datos sensibles); sesión cookie-only
+  (menos cómoda para clientes no-navegador como el Atajo); registro mínimo email+rol (no habilita
+  análisis biométrico real desde el inicio).
+- **Implementación:** access en memoria + rehidratación `refresh→me` al montar; refresh con
+  single-flight (deduplica 401 concurrentes); bcrypt cost 12; login con 401 genérico.
+
+### 2026-06-27 · Tailwind v3 mapeado a los tokens CSS (cero colores literales)
+
+- **Decisión:** Tailwind v3 (estable) con `theme.colors`/`fontFamily`/`borderRadius`/easing
+  **referenciando las CSS custom properties** del mockup (`surface: 'var(--surface)'`, etc.).
+  Los hex viven SOLO en `client/src/styles/tokens.css`; los componentes consumen tokens.
+- **Motivo:** cumple la regla dura de DESIGN.md ("solo tokens, cero colores literales") sin
+  renunciar a la ergonomía de utilidades Tailwind. Un único sitio para cambiar los `--m-*`.
+- **Alternativas descartadas:** Tailwind v4 (migración de config fuera de alcance del arranque);
+  CSS-in-JS o estilos sueltos (más difícil de auditar la regla de "color solo en datos").
+
+### 2026-06-27 · Flujo de ramas main / staging (regla dura)
+
+- **Decisión (del usuario, en CLAUDE.md §9):** todo el desarrollo ocurre en **`staging`** (o
+  ramas de feature que se mergean a `staging`); **`main` es solo para cambios ya validados**.
+- **Motivo:** mantener `main` como rama estable/de release; integrar y validar en `staging`.
+- **Cómo se aplica:** el trabajo de arranque vive en `feat/scaffold-auth` → se mergeará a
+  `staging`; a `main` solo cuando esté validado (incluye smoke e2e con Mongo real).
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

@@ -1,0 +1,75 @@
+/* ============================================================================
+   SmartPeak — TOKENS del sistema de diseño
+   Copiados TAL CUAL del mockup canónico (mockup-mono.html) y de DESIGN.md §3.
+   Es restricción dura: los componentes consumen estas variables, nunca colores
+   literales. Tema oscuro por defecto en :root; tema claro ("Paper") en body.paper.
+   ============================================================================ */
+
+:root {
+  /* Superficies neutras (sistema iOS · oscuro). Ningún color de marca domina. */
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --line: #38383a;
+  --line-strong: #48484a;
+  --text: #f5f5f7;
+  --text-muted: #98989f;
+  --text-faint: #636366;
+
+  /* "accent" = énfasis de UI MONOCROMO (botones, ticks). No es un color de marca. */
+  --accent: #f5f5f7;
+  --accent-text: #1c1c1e;
+
+  /* Señales semánticas fijas */
+  --pos: #30d158;
+  --neg: #ff453a;
+  --warn: #ffd60a;
+
+  /* Colores POR MÉTRICA — PROVISIONALES (pendientes de definir, DESIGN.md §3b) */
+  --m-rdy: #0a84ff; /* readiness */
+  --m-hrv: #30d158; /* HRV */
+  --m-rhr: #ff375f; /* FC reposo */
+  --m-sleep: #64d2ff; /* sueño */
+  --m-steps: #ff9f0a; /* pasos */
+  --m-weight: #8e8e93; /* peso */
+
+  --ring-track: #2c2c2e;
+
+  /* Gradiente "IA" (estilo Apple Intelligence) — exclusivo del panel del coach */
+  --ai-grad: linear-gradient(115deg, #ff6fd8 0%, #a78bfa 50%, #5ac8fa 100%);
+
+  --hi: color-mix(in srgb, #ffffff 5%, transparent);
+  --shadow: none;
+  --r: 16px;
+  --r-sm: 11px;
+
+  /* Curvas de motion (§8 DESIGN.md) — nunca ease-in en UI, nunca bounce */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* entradas, count-up, anillos */
+  --ease-out-ui: cubic-bezier(0.23, 1, 0.32, 1); /* hover, press, estados */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1); /* mover / reordenar */
+
+  /* Familias tipográficas: UI = sistema (look Apple), datos = mono tabular */
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --num: "Space Mono", ui-monospace, monospace;
+  --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+}
+
+/* Tema claro "Paper": solo se redefinen los tokens semánticos (DESIGN.md §3) */
+body.paper {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --line: #e5e5ea;
+  --line-strong: #d1d1d6;
+  --text: #1d1d1f;
+  --text-muted: #8a8a8e;
+  --text-faint: #b0b0b5;
+  --accent: #1d1d1f;
+  --accent-text: #ffffff;
+  --pos: #34c759;
+  --neg: #ff3b30;
+  --warn: #ff9f0a;
+  --ring-track: #e9e9ee;
+  --hi: transparent;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 22px rgba(0, 0, 0, 0.05);
+}

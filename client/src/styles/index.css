@@ -1,0 +1,89 @@
+/* Tokens primero: deben existir antes de que Tailwind genere utilidades que los usan. */
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   Base — look Apple nativo. El dato es el héroe (DESIGN.md §1, §2).
+   ============================================================================ */
+@layer base {
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Selección sobria, derivada del color de texto del tema activo. */
+  ::selection {
+    background: color-mix(in srgb, var(--text) 18%, transparent);
+  }
+}
+
+/* ============================================================================
+   Utilidades de tipografía de datos vs UI.
+   .mono  → toda cifra que sea un dato (tabular-nums, sin jitter de ancho).
+   .disp  → texto/labels de UI con la fuente del sistema.
+   ============================================================================ */
+@layer utilities {
+  .mono {
+    font-family: var(--num);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .disp {
+    font-family: var(--display);
+  }
+}
+
+/* ============================================================================
+   Foco accesible (DESIGN.md §11): nunca outline:none sin reemplazo.
+   ============================================================================ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* El teclado sí ve el foco; el ratón no arrastra el outline tras pulsar. */
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================================
+   Transición entre pasos del wizard de registro (DESIGN.md §8).
+   Crossfade + leve translate; SOLO transform/opacity, --ease-out, 150–250ms,
+   sin bounce ni ease-in. La dirección la fija --step-dir (1 adelante, -1 atrás).
+   ============================================================================ */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--step-dir, 1) * 16px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.step-enter {
+  animation: step-in 0.22s var(--ease-out) both;
+}
+
+/* ============================================================================
+   Accesibilidad de motion (DESIGN.md §8): reducir, no eliminar.
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Sin desplazamiento entre pasos: solo aparece (opacidad), sin translate. */
+  .step-enter {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

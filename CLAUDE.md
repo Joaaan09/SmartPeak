@@ -139,16 +139,38 @@ Eres el ORQUESTADOR. Tu trabajo es coordinar, no ejecutar el trabajo pesado.
 ## 9. Convenciones
 
 - **Idioma**: todo en **español** (código de identificadores en inglés, comentarios y docs en español).
+- **Ramas (regla dura)**: se trabaja con dos ramas, **`main`** y **`staging`**.
+  - **Todo el desarrollo ocurre en `staging`** (o ramas de feature que se mergean a `staging`).
+    Nunca se implementan cosas nuevas directamente sobre `main`.
+  - Cuando los cambios estén **finalizados y comprobados que funcionan**, se hace **merge de
+    `staging` → `main`**.
+  - **`main` es solo para aplicar cambios ya validados** (rama estable/de release), no para
+    desarrollar.
 - **Componentes**: funcionales, pequeños y modulares. Si un patrón de UI se repite, extráelo a
   un componente reutilizable en vez de copiar/pegar. Cero hardcode de colores: tokens/clases del sistema.
 - No inventes decisiones ya pendientes (modelo de IA, enfoques de rol, colores `--m-*`):
   si hace falta, **pregunta o anótalo como pendiente**.
-- Stack aún sin scaffolding: cuando se monte, documenta comandos de build/test/lint aquí.
+- **Stack montado** (MERN + TS): monorepo `client/` (Vite + React 18 + TS + Tailwind v3) +
+  `server/` (Express + TS + Mongoose + JWT). Auth con JWT (access en memoria + refresh en
+  cookie httpOnly). Comandos en §10.
 
 ## 10. Comandos
 
 ```bash
-bash scripts/init.sh      # arranque de sesión: muestra el estado actual del proyecto
+bash scripts/init.sh        # arranque de sesión: muestra el estado actual del proyecto
+
+# Monorepo (desde la raíz)
+npm run install:all         # instala deps de raíz + server + client
+npm run dev                 # levanta server (:4000) y client (:5173) a la vez (concurrently)
+npm run build               # build de server (tsc) + client (tsc -b && vite build)
+npm run typecheck           # typecheck de ambos
+npm run lint                # lint del client (eslint)
+
+# Por paquete
+npm --prefix server run dev # solo backend (tsx watch)  · necesita MONGODB_URI (Atlas o Mongo local)
+npm --prefix client run dev # solo frontend (Vite)
 ```
 
-> (build / dev / test / lint se añadirán cuando exista el scaffolding del MERN.)
+> Requisitos de entorno: copia `server/.env.example` → `server/.env` y `client/.env.example`
+> → `client/.env`. El backend necesita un MongoDB alcanzable (`MONGODB_URI`); no hay Mongo
+> local en este equipo todavía. Tests: aún no hay suite (pendiente).

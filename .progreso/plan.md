@@ -4,12 +4,21 @@
 
 ## Fase 0 — Scaffolding (infraestructura)
 
-- [ ] Decidir estructura del monorepo / carpetas (`client/` + `server/` o similar)
-- [ ] Scaffolding del backend Node + Express
-- [ ] Scaffolding del frontend React (+ Tailwind)
-- [ ] Conexión a MongoDB
+- [x] Decidir estructura del monorepo / carpetas (`client/` + `server/`) + raíz con `concurrently`
+- [x] Scaffolding del backend Node + Express (TypeScript, ESM)
+- [x] Scaffolding del frontend React (+ Tailwind v3) — TypeScript
+- [x] Conexión a MongoDB (`connectDB` con Mongoose; no rompe el server si Mongo no responde)
 - [ ] Endpoint de ingesta del POST del Atajo de iOS (Health Auto Export)
-- [ ] Variables de entorno y `scripts/init.sh` con comandos reales
+- [x] Variables de entorno (`.env.example` en server y client) y comandos reales en CLAUDE.md §10
+
+## Fase 0.5 — Autenticación (entrada de la app) — añadida
+
+- [x] Modelo `User` (rol Power/Hiper/Salud + sexo + físicos + `preferences.theme`)
+- [x] Backend auth JWT: register / login / refresh / logout / me + `PATCH /users/me` (rol editable)
+- [x] Login UI + wizard de registro premium de 5 pasos (mobile-first, DESIGN.md)
+- [x] AuthContext (token en memoria + rehidratación) + rutas protegidas
+- [x] Revisión adversarial + corrección de hallazgos (typecheck/build/lint verdes)
+- [ ] Smoke test end-to-end contra un MongoDB real (Atlas/local) — PENDIENTE
 
 ## Fase 1 — Bloquear el sistema de diseño
 

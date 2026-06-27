@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-06-27 (noche) — Arranque MERN + Autenticación
+
+- **Decisiones de arranque** (vía pregunta al usuario): stack en **TypeScript**, onboarding
+  **completo de 5 pasos**, sesión con **JWT**. Registradas en `decisiones.md`.
+- **Scaffolding monorepo** (orquestador → 2 ejecutores en paralelo):
+  - `server/`: Express + TS (ESM) + Mongoose + JWT + zod + bcrypt + helmet. `connectDB` que no
+    tumba el server si Mongo no responde. `GET /api/health` OK.
+  - `client/`: Vite + React 18 + TS + **Tailwind v3 con tokens del mockup** (oscuro default +
+    `body.paper`), Space Mono, ThemeProvider, esqueleto de rutas.
+  - Raíz: `package.json` con `npm run dev` (concurrently), `build`, `typecheck`, `lint`,
+    `install:all`. CLAUDE.md §10 con comandos reales.
+- **Autenticación** (ejecutor + revisor):
+  - Modelo `User` (role Power/Hiper/Salud, sex, físicos, `preferences.theme`; `toJSON` oculta
+    `passwordHash`). Rutas register/login/refresh/logout/me + `PATCH /users/me` (rol editable).
+  - Frontend: login + **wizard premium de 5 pasos** (Cuenta·Perfil·Objetivo·Físicos·Listo),
+    AuthContext (access en memoria + refresh→me al montar), rutas protegidas, primitivos UI
+    reutilizables. Motion §8, a11y §10/§11, chrome monocromo, datos en mono.
+- **Revisión adversarial**: aprobado, sin críticos ni fugas de seguridad. Corregidos: lint en
+  rojo (extraído `useTheme` a módulo propio), single-flight del refresh concurrente, mono de
+  email en el resumen, log de `MONGODB_URI` en errores. **typecheck/build/lint en verde**.
+- **Pendiente**: smoke real con un MongoDB (no hay BD en el equipo). Trabajo en rama
+  `feat/scaffold-auth`, **sin commitear** (a la espera de decidir commit a `staging`).
+
 ## 2026-06-27 (tarde)
 
 - Instaladas **skills de diseño** en `~/.claude/skills/`: `emil-design-eng`,
