@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -27,8 +26,6 @@ import { AuthContext, type AuthContextValue } from './useAuth';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // Evita rehidratar dos veces bajo React.StrictMode en desarrollo.
-  const didInit = useRef(false);
 
   // Limpia la sesión local cuando el refresh falla de forma definitiva.
   const clearSession = useCallback(() => {
@@ -43,10 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   // Rehidratación al montar: refresh → me.
+  // Sin guard de "init único": bajo React.StrictMode (dev) el efecto se monta,
+  // se limpia (cancelled=true) y se vuelve a montar; el segundo montaje SÍ debe
+  // ejecutarse para llegar a setLoading(false). El single-flight de tryRefresh
+  // deduplica el doble POST /auth/refresh, así que no hay coste real.
   useEffect(() => {
-    if (didInit.current) return;
-    didInit.current = true;
-
     let cancelled = false;
     (async () => {
       const refreshed = await tryRefresh();
