@@ -27,6 +27,24 @@
 - **Pendiente**: smoke real con un MongoDB (no hay BD en el equipo). Trabajo en rama
   `feat/scaffold-auth`, **sin commitear** (a la espera de decidir commit a `staging`).
 
+## 2026-06-28 — MongoDB local + bug "Cargando" (StrictMode)
+
+- **MongoDB local de desarrollo** sin instalar nada en el sistema: `mongodb-memory-server` +
+  `npm run db:dev` (server/scripts/mongo-dev.mjs), fijado al 27017 con datos persistentes en
+  `server/.mongo-data` (gitignored). Levantados Mongo + API (4000) + Vite (5173).
+- **Smoke e2e real**: `POST /auth/register` → **HTTP 201**, respuesta con `id` y **sin
+  `passwordHash`** (confirma `toJSON` con doc real, que el revisor no pudo verificar antes).
+- **Bug encontrado al validar en navegador**: la app se quedaba en "Cargando tu sesión"
+  (spinner infinito) en `/login`. Causa: en `AuthContext`, el guard `didInit` (useRef) chocaba
+  con el flag `cancelled` bajo el **doble montaje de React.StrictMode** (dev): el 2.º montaje
+  salía por el guard y el 1.º no llegaba a `setLoading(false)` por estar cancelado. **Fix**:
+  quitado el guard (el single-flight de `tryRefresh` ya deduplica). Verificado con **render
+  headless de Chrome**: ahora pinta el login. Commits `2feef62` (fix) y `61f2cb3` (tooling).
+- **Lección**: el revisor audita en estático y no simula el timing de StrictMode; conviene
+  validación runtime real (navegador headless) antes de dar por bueno un flujo de UI con efectos.
+- Nota de entorno: instancias de Vite duplicadas de pruebas de agentes ocupaban 5173/5174 con
+  caché `.vite` obsoleta; se limpiaron y se dejó una sola en 5173.
+
 ## 2026-06-28 — Shell + pestaña Hoy (modo vista)
 
 - **Git**: commit del arranque+auth en `feat/scaffold-auth` → merge a `staging` (`cbf1999`).
