@@ -44,6 +44,7 @@
   validación runtime real (navegador headless) antes de dar por bueno un flujo de UI con efectos.
 - Nota de entorno: instancias de Vite duplicadas de pruebas de agentes ocupaban 5173/5174 con
   caché `.vite` obsoleta; se limpiaron y se dejó una sola en 5173.
+- ✅ **Confirmado por el usuario**: tras el fix, el login/registro funciona en su navegador.
 
 ## 2026-06-28 — Shell + pestaña Hoy (modo vista)
 

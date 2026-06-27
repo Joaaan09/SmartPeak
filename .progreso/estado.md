@@ -2,7 +2,7 @@
 
 > Léeme al empezar. Actualízame al terminar cada sesión.
 
-**Última actualización:** 2026-06-27
+**Última actualización:** 2026-06-28
 
 ## Dónde estamos
 
@@ -21,7 +21,11 @@ doc + mock: hay app real.
 
 **Estado de verificación:** `typecheck` + `build` + `lint` en verde (client) y `typecheck`
 verde (server). Revisor: aprobado, sin críticos ni fugas de seguridad; hallazgos corregidos.
-**No probado end-to-end contra Mongo** (no hay MongoDB en este equipo) — pendiente smoke real.
+**✅ App funcionando end-to-end y CONFIRMADO POR EL USUARIO en navegador (2026-06-28):** se levantó
+MongoDB local (mongodb-memory-server, `npm run db:dev`), backend (4000) y Vite (5173); el smoke
+`POST /auth/register` devolvió **201** con `id` y sin `passwordHash`, y el login/registro renderiza
+y funciona en el navegador. Durante esta validación se encontró y corrigió un bug de "Cargando"
+infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 **Fase 1 (UI) — shell + Hoy en modo VISTA hecho y revisado (aprobado):**
 - `client/src/layout/*` — `AppLayout` (regleta desktop + tab bar móvil con safe-area), header de
@@ -41,11 +45,12 @@ verde (server). Revisor: aprobado, sin críticos ni fugas de seguridad; hallazgo
 1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por
    escalones, añadir/quitar desde catálogo, y **persistencia del layout** `{widgetId,x,y,w,h}`
    (vía `PATCH /users/me` o endpoint nuevo). DESIGN.md §5.
-2. **Validar el render real** de Hoy en navegador a 375px y desktop, ambos temas (el revisor no
-   pudo: solo auditó código). Ajustar el "tono" si hace falta antes de seguir.
-3. **Smoke e2e con MongoDB** (Atlas/local): registro 5 pasos → sesión → logout → login;
-   confirmar `toJSON` sin `passwordHash` con doc real.
-4. Fase 2: pestañas `Tendencias` / `Entreno` / `Perfil` reales.
+2. **Afinar el "tono" visual de Hoy** según lo que vea el usuario en el navegador (375px +
+   desktop, ambos temas) antes de seguir. Login/registro ya confirmados; falta el OK de Hoy.
+3. Fase 2: pestañas `Tendencias` / `Entreno` / `Perfil` reales.
+
+> Smoke e2e con Mongo: HECHO y confirmado (registro 201). Para retomar la app en otra sesión:
+> `npm run db:dev` (server) + `npm run dev` (raíz) → http://localhost:5173.
 
 ## Bloqueos / pendientes de decisión
 
