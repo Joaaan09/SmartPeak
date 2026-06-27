@@ -72,11 +72,82 @@ button:focus:not(:focus-visible) {
 }
 
 /* ============================================================================
+   Dashboard Hoy — entrada escalonada de widgets (DESIGN.md §8).
+   Stagger 50ms vía --i (índice del widget), una vez, no bloquea interacción.
+   Solo transform/opacity, --ease-out, sin bounce, arranque en translateY (no
+   scale(0)).
+   ============================================================================ */
+@keyframes win {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sp-widget {
+  animation: win 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+/* Mini-anillo de métrica (DESIGN.md §7b): conic-gradient en --ring hasta --p%,
+   recortado a anillo con máscara radial. El color (--ring) lo fija cada métrica
+   con su token --m-* (color SOLO en el dato). */
+.sp-minring {
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring) calc(var(--p) * 1%),
+    var(--ring-track) 0
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent 67%, #000 68%);
+  mask: radial-gradient(farthest-side, transparent 67%, #000 68%);
+}
+
+/* Barra superior de 3px del coach con el gradiente IA (DESIGN.md §3c/§7c).
+   Único sitio de la app con gradiente. */
+.sp-coach::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--ai-grad);
+}
+
+/* LED pulsante del badge del coach (DESIGN.md §8, ≈2.6s). */
+@keyframes pulse-ai {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.sp-led {
+  animation: pulse-ai 2.6s var(--ease-in-out) infinite;
+}
+
+/* ============================================================================
    Accesibilidad de motion (DESIGN.md §8): reducir, no eliminar.
    ============================================================================ */
 @media (prefers-reduced-motion: reduce) {
   /* Sin desplazamiento entre pasos: solo aparece (opacidad), sin translate. */
   .step-enter {
+    animation: none;
+  }
+  /* Widgets: aparecen sin desplazarse ni escalonarse. */
+  .sp-widget {
+    animation: none;
+  }
+  /* LED: deja de pulsar (queda visible, no se elimina). */
+  .sp-led {
     animation: none;
   }
   *,
