@@ -27,6 +27,26 @@
 - **Pendiente**: smoke real con un MongoDB (no hay BD en el equipo). Trabajo en rama
   `feat/scaffold-auth`, **sin commitear** (a la espera de decidir commit a `staging`).
 
+## 2026-06-28 — Shell + pestaña Hoy (modo vista)
+
+- **Git**: commit del arranque+auth en `feat/scaffold-auth` → merge a `staging` (`cbf1999`).
+  Nueva rama `feat/hoy-shell` desde `staging`. `main` queda en el baseline (regla §9).
+- **Shell responsive** (ejecutor + revisor): `AppLayout` con regleta desktop (Readiness compacto
+  + nav numeral/label + toggle tema) y **tab bar inferior móvil** con `env(safe-area-inset)`;
+  header de pestaña (wordmark, sync, píldora de rol REAL del user, "Sincronizar"); tira meta.
+  Rutas anidadas `/ /tendencias /entreno /perfil` con `<Outlet/>`; logout movido a Perfil.
+- **Pestaña Hoy** (modo vista): dashboard bento 12-col (desktop) que reflowa a stack 2-col
+  (móvil). Widgets reutilizables: Readiness (count-up 800ms + anillo `--m-rdy`), Coach IA
+  (gradiente exclusivo + LED), MetricWidget ×4 (anillo `--m-*` por métrica), TrendWidget (HRV
+  7d). `data.ts` mock tipado (placeholder hasta el sync). Eliminados HomePage y ThemeToggle
+  flotante provisionales.
+- **Revisión adversarial**: APROBADO, sin críticos/altos/medios; chrome monocromo, gradiente IA
+  solo en coach, motion §8 y a11y correctos. Nits aplicados: numeral del rail a `font-bold`
+  (Space Mono solo carga 400/700; evita faux-bold) y quitada clase `disp` sobrante.
+- `typecheck/build/lint` en verde. Merge `feat/hoy-shell` → `staging` (`c10ad53`).
+- **No validado en navegador** (el revisor solo audita código): pendiente ver Hoy a 375px y
+  desktop en ambos temas. **Pendiente** modo edición (Iteración B) y smoke e2e con Mongo.
+
 ## 2026-06-27 (tarde)
 
 - Instaladas **skills de diseño** en `~/.claude/skills/`: `emil-design-eng`,

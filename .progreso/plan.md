@@ -22,11 +22,12 @@
 
 ## Fase 1 — Bloquear el sistema de diseño
 
-- [ ] Tokens CSS (DESIGN.md §2–4) + config de Tailwind
-- [ ] Cargar fuente mono (UI = fuente del sistema)
-- [ ] Pestaña `Hoy`: dashboard de widgets + Readiness + coach (base: mockup-mono.html)
-- [ ] Shell: rail desktop + tab bar móvil con pestaña activa
-- [ ] Iterar SOLO sobre `Hoy` hasta que el tono sea correcto
+- [x] Tokens CSS (DESIGN.md §2–4) + config de Tailwind
+- [x] Cargar fuente mono (UI = fuente del sistema)
+- [x] Pestaña `Hoy`: dashboard de widgets + Readiness + coach (base: mockup-mono.html) — modo VISTA
+- [x] Shell: rail desktop + tab bar móvil con pestaña activa
+- [ ] **Modo edición** del dashboard (jiggle/drag/resize/añadir-quitar + persistencia layout) — Iteración B
+- [ ] Iterar SOLO sobre `Hoy` hasta que el tono sea correcto (validar render real en navegador)
 
 ## Fase 2 — Resto de pestañas (contra el sistema bloqueado)
 

@@ -23,16 +23,29 @@ doc + mock: hay app real.
 verde (server). Revisor: aprobado, sin críticos ni fugas de seguridad; hallazgos corregidos.
 **No probado end-to-end contra Mongo** (no hay MongoDB en este equipo) — pendiente smoke real.
 
+**Fase 1 (UI) — shell + Hoy en modo VISTA hecho y revisado (aprobado):**
+- `client/src/layout/*` — `AppLayout` (regleta desktop + tab bar móvil con safe-area), header de
+  pestaña (wordmark, sync, píldora de rol real, "Sincronizar"), tira meta. Rutas anidadas con
+  `<Outlet/>`: `/` Hoy + placeholders `/tendencias` `/entreno` `/perfil` (logout en Perfil).
+- `client/src/features/today/*` — dashboard bento (desktop) / stack 2-col (móvil): Readiness
+  (count-up + anillo), Coach IA (gradiente exclusivo), 4 métricas con anillo `--m-*`, tendencia
+  HRV 7d. Widgets reutilizables + `data.ts` mock TIPADO (placeholder hasta el sync biométrico).
+- Theme toggle movido a la regleta (desktop) + Perfil (móvil). `typecheck/build/lint` en verde.
+
 ## En curso
 
-- Nada a medias. El bloque de auth está cerrado a falta de la prueba e2e con una BD real.
+- Nada a medias. Auth y (shell + Hoy vista) cerrados y mergeados a `staging`.
 
-## Siguiente paso
+## Siguiente paso (elegir)
 
-1. **Levantar un MongoDB** (Atlas o local) y hacer el smoke real del flujo: registro 5 pasos →
-   sesión → `/` → logout → login. Confirmar `toJSON` no expone `passwordHash` con doc real.
-2. Empezar **Fase 1 de UI de producto**: pestaña `Hoy` (dashboard de widgets + Readiness +
-   coach) sobre el shell (rail desktop + tab bar móvil). Base: `mockup-mono.html`.
+1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por
+   escalones, añadir/quitar desde catálogo, y **persistencia del layout** `{widgetId,x,y,w,h}`
+   (vía `PATCH /users/me` o endpoint nuevo). DESIGN.md §5.
+2. **Validar el render real** de Hoy en navegador a 375px y desktop, ambos temas (el revisor no
+   pudo: solo auditó código). Ajustar el "tono" si hace falta antes de seguir.
+3. **Smoke e2e con MongoDB** (Atlas/local): registro 5 pasos → sesión → logout → login;
+   confirmar `toJSON` sin `passwordHash` con doc real.
+4. Fase 2: pestañas `Tendencias` / `Entreno` / `Perfil` reales.
 
 ## Bloqueos / pendientes de decisión
 
@@ -40,8 +53,9 @@ verde (server). Revisor: aprobado, sin críticos ni fugas de seguridad; hallazgo
 - Mejora opcional pendiente (no bloqueante): single-flight del refresh ya hecho; falta suite de
   tests automatizados y rate-limiting en login (anotado para más adelante).
 
-## Git / ramas (regla dura nueva en CLAUDE.md §9)
+## Git / ramas (regla dura en CLAUDE.md §9)
 
 - Desarrollo en `staging` (o ramas de feature → `staging`). `main` solo para validado.
-- Trabajo de esta sesión en rama **`feat/scaffold-auth`** (aún SIN commitear; pendiente de
-  decidir commit a `staging`). `main`/`staging`/`feat/scaffold-auth` en el baseline `b9851a5`.
+- **`staging` = `c10ad53`** con auth + (shell + Hoy vista) ya mergeados (vía `feat/scaffold-auth`
+  y `feat/hoy-shell`). **`main` sigue en el baseline `b9851a5`** (a la espera de validación e2e).
+- Próxima feature: nueva rama desde `staging` (p. ej. `feat/hoy-edit`).
