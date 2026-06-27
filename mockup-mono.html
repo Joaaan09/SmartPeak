@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartPeak · Hoy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  /* Superficies neutras (sistema iOS · oscuro). Ningún color de marca domina. */
+  --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E;
+  --line:#38383A; --line-strong:#48484A;
+  --text:#F5F5F7; --text-muted:#98989F; --text-faint:#636366;
+  /* "accent" = énfasis de UI MONOCROMO (botones, ticks). No es un color de marca. */
+  --accent:#F5F5F7; --accent-text:#1C1C1E;
+  /* Señales semánticas fijas */
+  --pos:#30D158; --neg:#FF453A; --warn:#FFD60A;
+  /* Colores POR MÉTRICA — PROVISIONALES (pendientes de definir) */
+  --m-rdy:#0A84FF;   /* readiness */
+  --m-hrv:#30D158;   /* HRV */
+  --m-rhr:#FF375F;   /* FC reposo */
+  --m-sleep:#64D2FF; /* sueño */
+  --m-steps:#FF9F0A; /* pasos */
+  --m-weight:#8E8E93;/* peso */
+  --ring-track:#2C2C2E;
+  /* Gradiente "IA" (estilo Apple Intelligence) — para el panel del coach */
+  --ai-grad:linear-gradient(115deg,#FF6FD8 0%,#A78BFA 50%,#5AC8FA 100%);
+  --hi:color-mix(in srgb,#FFFFFF 5%,transparent);
+  --shadow:none;
+  --r:16px; --r-sm:11px;
+  /* Curvas de motion (§8 DESIGN.md) — nunca ease-in en UI, nunca bounce */
+  --ease-out:cubic-bezier(.16,1,.3,1);      /* entradas, count-up, anillos */
+  --ease-out-ui:cubic-bezier(.23,1,.32,1);  /* hover, press, estados */
+  --ease-in-out:cubic-bezier(.77,0,.175,1); /* mover / reordenar */
+  --display:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  --num:'Space Mono',ui-monospace,monospace;     /* cifras: mono tabular */
+  --body:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+}
+body.paper{
+  --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#FFFFFF;
+  --line:#E5E5EA; --line-strong:#D1D1D6;
+  --text:#1D1D1F; --text-muted:#8A8A8E; --text-faint:#B0B0B5;
+  --accent:#1D1D1F; --accent-text:#FFFFFF;
+  --pos:#34C759; --neg:#FF3B30; --warn:#FF9F0A;
+  --ring-track:#E9E9EE;
+  --hi:transparent;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 22px rgba(0,0,0,.05);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--body);color:var(--text);font-size:15px;line-height:1.45;
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;display:flex;height:100vh;overflow:hidden;position:relative}
+::selection{background:color-mix(in srgb,var(--text) 18%,transparent)}
+.mono{font-family:var(--num);font-variant-numeric:tabular-nums lining-nums}
+.disp{font-family:var(--display)}
+
+/* ============ INTERACCIÓN (§11) ============ */
+/* Foco accesible: nunca outline:none sin reemplazo */
+button:focus-visible,[tabindex]:focus-visible,.widget:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+button:focus:not(:focus-visible){outline:none}
+/* Feedback de pulsación: scale(.97) en todo lo accionable (funciona también en táctil) */
+.navitem,.iconbtn,.ctl,.btn,.wadd,.editbar button,.wcoach .chip{
+  transition:transform .14s var(--ease-out-ui),color .15s,background .15s,border-color .15s}
+.navitem:active,.iconbtn:active,.ctl:active,.btn:active,.wadd:active,.editbar button:active{
+  transform:scale(.97)}
+/* Hover solo en punteros finos (el uso es mayoritariamente móvil) */
+@media (hover:hover) and (pointer:fine){
+  .navitem:hover{color:var(--text-muted)}
+  .iconbtn:hover{color:var(--text);background:var(--surface-2)}
+  .ctl:hover{border-color:var(--line-strong)}
+  .btn:hover{filter:brightness(.96)}
+  .wadd:hover{border-color:var(--text-muted);color:var(--text-muted)}
+}
+
+/* ============ REGLETA (navegación) ============ */
+.rail{width:66px;flex-shrink:0;background:color-mix(in srgb,var(--surface) 60%,var(--bg));
+  border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:stretch;
+  padding:14px 0 12px;z-index:2;position:relative}
+.rdy{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0 14px;
+  border-bottom:1px solid var(--line);margin-bottom:10px}
+.rdy .n{font-family:var(--num);font-weight:700;font-size:22px;color:var(--text);line-height:1}
+.rdy .l{font-family:var(--display);font-size:8.5px;font-weight:600;letter-spacing:.14em;color:var(--text-faint)}
+.rdy .bar{width:28px;height:4px;margin-top:5px;background:var(--ring-track);position:relative;border-radius:99px}
+.rdy .bar i{position:absolute;left:0;top:0;bottom:0;width:78%;background:var(--m-rdy);border-radius:99px}
+.rail nav{display:flex;flex-direction:column;flex:1;gap:3px;padding:0 8px}
+.navitem{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:10px 0;color:var(--text-faint);cursor:pointer;border:none;background:none;
+  font-family:var(--display);border-radius:12px;transition:transform .14s var(--ease-out-ui),color .15s,background .15s}
+.navitem .n{font-size:9px;font-weight:600;letter-spacing:.08em}
+.navitem .l{font-size:11px;letter-spacing:.06em;font-weight:600}
+.navitem.active{color:var(--text);background:var(--surface-2)}
+.rail .foot{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+.iconbtn{width:44px;height:44px;display:grid;place-items:center;color:var(--text-faint);background:none;border:none;cursor:pointer;border-radius:11px}
+.iconbtn svg{width:18px;height:18px}
+
+/* ============ MAIN ============ */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;z-index:1}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:18px 30px 14px;border-bottom:1px solid var(--line)}
+.wordmark{display:flex;align-items:baseline;gap:11px}
+.wordmark h1{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.02em}
+.wordmark .sep{color:var(--text-faint)}
+.wordmark .tab{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.01em;color:var(--text-muted)}
+.sub{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:12.5px;color:var(--text-muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--pos)}
+.top-right{display:flex;align-items:center;gap:10px}
+.ctl{font-family:var(--body);font-size:13px;font-weight:500;color:var(--text);background:var(--surface);
+  border:1px solid var(--line);padding:9px 14px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.ctl svg{width:15px;height:15px}
+.ctl.on{border-color:var(--text-muted);color:var(--text)}
+.btn{background:var(--accent);color:var(--accent-text);border:none;font-family:var(--body);font-size:13px;font-weight:600;padding:10px 18px;border-radius:99px;cursor:pointer}
+
+/* tira de metadatos */
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;padding:9px 30px;border-bottom:1px solid var(--line);
+  font-family:var(--display);font-size:11px;letter-spacing:.01em;color:var(--text-faint)}
+.meta b{color:var(--text-muted);font-weight:600}
+
+/* barra de modo edición */
+.editbar{display:none;align-items:center;gap:14px;padding:9px 30px;border-bottom:1px solid var(--line);
+  background:var(--surface);font-family:var(--display);font-size:12px;color:var(--text-muted)}
+body.editing .editbar{display:flex}
+.editbar .spacer{flex:1}
+.editbar button{font-family:var(--display);font-size:12px;font-weight:600;cursor:pointer;border-radius:99px;padding:7px 14px}
+.editbar .add{background:none;border:1px dashed var(--line-strong);color:var(--text-muted)}
+.editbar .done{background:var(--accent);border:none;color:var(--accent-text)}
+
+/* ============ DASHBOARD DE WIDGETS ============ */
+.canvas{flex:1;min-height:0;position:relative;padding:18px 24px 22px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(4,minmax(112px,1fr));
+  gap:14px;height:100%;grid-auto-flow:dense}
+.widget{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow),inset 0 1px 0 var(--hi);
+  padding:16px 18px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+body.editing .widget{cursor:grab}
+body.editing .widget:not(.wadd){animation:jiggle .5s ease-in-out infinite}
+body.editing .widget.dragging{opacity:.5;outline:2px solid var(--text-muted);animation:none}
+@keyframes jiggle{0%,100%{transform:rotate(-.35deg)}50%{transform:rotate(.35deg)}}
+/* spans */
+.w5h2{grid-column:span 5;grid-row:span 2}
+.w4h2{grid-column:span 4;grid-row:span 2}
+.w3{grid-column:span 3}
+.w8{grid-column:span 8}
+.w4{grid-column:span 4}
+.widget.big{grid-column:span 6}
+
+/* manijas (solo modo edición) */
+.whandle,.wclose,.wresize{display:none}
+body.editing .whandle{display:flex;position:absolute;top:9px;right:10px;color:var(--text-faint);font-size:13px;letter-spacing:1px}
+body.editing .wclose{display:grid;place-items:center;position:absolute;top:7px;left:8px;width:20px;height:20px;
+  background:var(--neg);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;z-index:3}
+body.editing .wresize{display:block;position:absolute;right:6px;bottom:6px;width:12px;height:12px;cursor:nwse-resize;
+  border-right:2px solid var(--text-muted);border-bottom:2px solid var(--text-muted);border-radius:0 0 3px 0}
+
+/* cabecera de widget */
+.wlabel{font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:.01em;color:var(--text-muted)}
+.wtop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.delta{font-family:var(--num);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.delta.up{color:var(--pos)}
+.delta.down{color:var(--neg)}
+.delta.flat{color:var(--text-muted)}
+
+/* ---- widget de métrica con ANILLO (cada uno su color) ---- */
+.wmetric .mrow{display:flex;align-items:center;gap:15px;margin-top:auto}
+.minring{width:58px;height:58px;flex-shrink:0;border-radius:50%;
+  background:conic-gradient(var(--ring) calc(var(--p)*1%),var(--ring-track) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent 67%,#000 68%);
+          mask:radial-gradient(farthest-side,transparent 67%,#000 68%)}
+.mval{display:flex;flex-direction:column;min-width:0}
+.mval .v{font-family:var(--num);font-weight:700;font-size:27px;line-height:1.05;letter-spacing:-.02em;color:var(--text)}
+.mval .v i{font-family:var(--body);font-style:normal;font-size:13px;color:var(--text-muted);margin-left:3px;font-weight:500}
+.mval .c{font-family:var(--display);font-size:11.5px;color:var(--text-faint);margin-top:4px}
+
+/* ---- widget Readiness (firma, anillo grande) ---- */
+.wreadiness{align-items:center;justify-content:center;text-align:center}
+.ringwrap{position:relative;width:176px;height:176px}
+.ringwrap svg{transform:rotate(-90deg)}
+.ringcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringcenter .score{font-family:var(--num);font-weight:700;font-size:60px;line-height:1;color:var(--text);letter-spacing:-.03em}
+.ringcenter .den{font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-faint);margin-top:3px}
+.wreadiness .state{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--pos);margin-top:14px}
+.wreadiness .ssub{font-size:12.5px;color:var(--text-muted);margin-top:4px}
+
+/* ---- widget Coach (IA · panel inteligente) ---- */
+.wcoach{background:var(--surface-2)}
+.wcoach::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ai-grad)}
+.wcoach .by{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.02em;
+  align-self:flex-start;margin-bottom:12px;display:inline-flex;align-items:center;gap:8px;
+  background:var(--ai-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wcoach .by .led{width:7px;height:7px;border-radius:50%;background:var(--ai-grad);
+  animation:pulse-ai 2.6s ease-in-out infinite}
+@keyframes pulse-ai{0%,100%{opacity:1}50%{opacity:.35}}
+.wcoach h2{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:-.01em;margin-bottom:8px}
+.wcoach p{font-size:14px;line-height:1.55;color:var(--text-muted)}
+.wcoach p b{color:var(--text);font-weight:600}
+.wcoach .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:14px}
+.wcoach .chip{font-family:var(--num);font-size:12.5px;background:var(--surface);border:1px solid var(--line);padding:7px 11px;border-radius:var(--r-sm)}
+.wcoach .chip span{font-family:var(--display);font-size:9px;font-weight:600;letter-spacing:.06em;color:var(--text-muted);margin-right:6px}
+
+/* ---- widget tendencia (gráfico) ---- */
+.wtrend .chart{flex:1;margin-top:12px}
+.wtrend .chart svg{width:100%;height:100%;display:block}
+
+/* ---- widget vacío "+ añadir" ---- */
+.wadd{border:1px dashed var(--line-strong);background:transparent;box-shadow:none;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:7px;color:var(--text-faint);cursor:pointer;font-family:var(--display);
+  font-size:12px;font-weight:600}
+.wadd .plus{font-size:28px;line-height:1;font-weight:300}
+
+/* ---- entrada escalonada de widgets (§8: 50ms, una vez, no bloquea) ---- */
+@keyframes win{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.widget{animation:win .5s var(--ease-out) both;animation-delay:calc(var(--i,0)*50ms)}
+.grid>.widget:nth-child(1){--i:0}.grid>.widget:nth-child(2){--i:1}
+.grid>.widget:nth-child(3){--i:2}.grid>.widget:nth-child(4){--i:3}
+.grid>.widget:nth-child(5){--i:4}.grid>.widget:nth-child(6){--i:5}
+.grid>.widget:nth-child(7){--i:6}.grid>.widget:nth-child(8){--i:7}
+.grid>.widget:nth-child(9){--i:8}
+
+/* ---- accesibilidad de motion: reducir, no eliminar (§8) ---- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important}
+  .widget{animation:none}
+  body.editing .widget:not(.wadd){animation:none}
+}
+
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:4px}
+</style>
+</head>
+<body>
+
+  <!-- ============ REGLETA ============ -->
+  <aside class="rail">
+    <div class="rdy">
+      <span class="n mono" id="railScore">78</span>
+      <span class="l">RDY</span>
+      <span class="bar"><i></i></span>
+    </div>
+    <nav>
+      <button class="navitem active"><span class="n">01</span><span class="l">Hoy</span></button>
+      <button class="navitem"><span class="n">02</span><span class="l">Tnd</span></button>
+      <button class="navitem"><span class="n">03</span><span class="l">Ent</span></button>
+      <button class="navitem"><span class="n">04</span><span class="l">Prf</span></button>
+    </nav>
+    <div class="foot">
+      <button class="iconbtn" id="themeToggle" title="Tema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg></button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="top">
+      <div>
+        <div class="wordmark"><h1 class="disp">SmartPeak</h1><span class="sep">·</span><span class="tab">Hoy</span></div>
+        <div class="sub"><span class="dot"></span>Health Export · Sincronizado · hace 2 min</div>
+      </div>
+      <div class="top-right">
+        <button class="ctl">Powerlifting ⌄</button>
+        <button class="ctl" id="editBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M13 5l4 4"/></svg>Editar</button>
+        <button class="btn">Sincronizar</button>
+      </div>
+    </header>
+
+    <div class="meta">
+      <span>MIÉ 25 JUN · 06:42</span>
+      <span>FUENTE <b>APPLE HEALTH</b></span>
+    </div>
+
+    <div class="editbar">
+      <span>Modo edición</span>
+      <span class="spacer"></span>
+      <button class="add" id="addBtn">+ Añadir widget</button>
+      <button class="done" id="doneBtn">Hecho</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="canvas">
+      <div class="grid" id="grid">
+
+        <!-- Readiness (firma) -->
+        <section class="widget wreadiness w5h2" draggable="false">
+          <button class="wclose" title="Quitar">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="ringwrap">
+            <svg width="176" height="176" viewBox="0 0 176 176">
+              <circle cx="88" cy="88" r="78" fill="none" stroke="var(--ring-track)" stroke-width="13"/>
+              <circle id="ring" cx="88" cy="88" r="78" fill="none" stroke="var(--m-rdy)" stroke-width="13" stroke-linecap="round" stroke-dasharray="490" stroke-dashoffset="490"/>
+            </svg>
+            <div class="ringcenter"><span class="score" id="score">0</span><span class="den">READINESS / 100</span></div>
+          </div>
+          <div class="state">Recuperado</div>
+          <div class="ssub">Listo para sesión pesada · HRV +14%</div>
+        </section>
+
+        <!-- Coach IA -->
+        <section class="widget wcoach w4h2" draggable="false">
+          <button class="wclose" title="Quitar">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <span class="by"><span class="led"></span>COACH IA · POWERLIFTING</span>
+          <h2 class="disp">Plan de hoy</h2>
+          <p>Cuerpo <b>recuperado</b>. Intensidad en básicos: sentadilla y press <b>85–90%</b>. Accesorios sin llegar al fallo. Descanso 3–4 min.</p>
+          <div class="chips">
+            <span class="chip"><span>CARGA</span>14 200 kg</span>
+            <span class="chip"><span>HRV 7D</span>61 ms</span>
+            <span class="chip"><span>RACHA</span>12 d</span>
+          </div>
+        </section>
+
+        <!-- HRV -->
+        <section class="widget wmetric w3" style="--ring:var(--m-hrv);--p:74" draggable="false">
+          <button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="wtop"><span class="wlabel">HRV</span><span class="delta up">↑ 14%</span></div>
+          <div class="mrow">
+            <span class="minring"></span>
+            <span class="mval"><span class="v mono">112<i>ms</i></span><span class="c">7 días · 61 ms</span></span>
+          </div>
+        </section>
+
+        <!-- RHR -->
+        <section class="widget wmetric w3" style="--ring:var(--m-rhr);--p:42" draggable="false">
+          <button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="wtop"><span class="wlabel">FC REPOSO</span><span class="delta flat">0%</span></div>
+          <div class="mrow">
+            <span class="minring"></span>
+            <span class="mval"><span class="v mono">48<i>bpm</i></span><span class="c">media · 47</span></span>
+          </div>
+        </section>
+
+        <!-- Sueño -->
+        <section class="widget wmetric w3" style="--ring:var(--m-sleep);--p:82" draggable="false">
+          <button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="wtop"><span class="wlabel">SUEÑO</span><span class="delta up">↑ 6%</span></div>
+          <div class="mrow">
+            <span class="minring"></span>
+            <span class="mval"><span class="v mono">7:48</span><span class="c">meta · 8 h</span></span>
+          </div>
+        </section>
+
+        <!-- Pasos -->
+        <section class="widget wmetric w3" style="--ring:var(--m-steps);--p:55" draggable="false">
+          <button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="wtop"><span class="wlabel">PASOS</span><span class="delta down">↓ 12%</span></div>
+          <div class="mrow">
+            <span class="minring"></span>
+            <span class="mval"><span class="v mono">8 214</span><span class="c">meta · 10 k</span></span>
+          </div>
+        </section>
+
+        <!-- Tendencia HRV 7d -->
+        <section class="widget wtrend w8" draggable="false">
+          <button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>
+          <div class="wtop"><span class="wlabel">Tendencia HRV · 7 días</span><span class="delta up">↑ 9% media</span></div>
+          <div class="chart">
+            <svg viewBox="0 0 600 110" preserveAspectRatio="none">
+              <defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="var(--m-hrv)" stop-opacity="0.18"/>
+                <stop offset="1" stop-color="var(--m-hrv)" stop-opacity="0"/>
+              </linearGradient></defs>
+              <line x1="0" y1="92" x2="600" y2="92" stroke="var(--line)" stroke-width="1"/>
+              <line x1="0" y1="55" x2="600" y2="55" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 6"/>
+              <path fill="url(#trendFill)" d="M0,78 100,70 200,82 300,58 400,62 500,40 600,30 V110 H0 Z"/>
+              <polyline fill="none" stroke="var(--m-hrv)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="0,78 100,70 200,82 300,58 400,62 500,40 600,30"/>
+              <circle cx="600" cy="30" r="4" fill="var(--m-hrv)"/>
+            </svg>
+          </div>
+        </section>
+
+        <!-- Añadir widget -->
+        <button class="widget wadd w4" id="addSlot"><span class="plus">+</span>Añadir widget</button>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ---- tema claro / oscuro
+  document.getElementById('themeToggle').addEventListener('click',()=>document.body.classList.toggle('paper'));
+
+  // ---- modo edición
+  const editBtn=document.getElementById('editBtn'), doneBtn=document.getElementById('doneBtn'), grid=document.getElementById('grid');
+  function setEditing(on){
+    document.body.classList.toggle('editing',on);
+    editBtn.classList.toggle('on',on);
+    editBtn.lastChild.textContent = on?'Editando':'Editar';
+    grid.querySelectorAll('.widget:not(.wadd)').forEach(w=>w.draggable=on);
+  }
+  editBtn.addEventListener('click',()=>setEditing(!document.body.classList.contains('editing')));
+  doneBtn.addEventListener('click',()=>setEditing(false));
+
+  // ---- arrastrar para reordenar (DnD nativo)
+  let dragEl=null;
+  grid.addEventListener('dragstart',e=>{const w=e.target.closest('.widget');if(!w||w.classList.contains('wadd'))return;dragEl=w;w.classList.add('dragging');});
+  grid.addEventListener('dragend',()=>{if(dragEl)dragEl.classList.remove('dragging');dragEl=null;});
+  grid.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const over=e.target.closest('.widget');
+    if(!over||over===dragEl||over.id==='addSlot'||!dragEl)return;
+    const r=over.getBoundingClientRect();
+    const after=(e.clientY-r.top)/r.height>0.5;
+    grid.insertBefore(dragEl, after?over.nextSibling:over);
+  });
+
+  // ---- quitar / redimensionar / añadir
+  grid.addEventListener('click',e=>{
+    if(e.target.classList.contains('wclose')){e.target.closest('.widget').remove();}
+    if(e.target.classList.contains('wresize')){e.target.closest('.widget').classList.toggle('big');}
+  });
+  function addWidget(){
+    const w=document.createElement('section');
+    w.className='widget wmetric w3'; w.style.cssText='--ring:var(--m-weight);--p:60';
+    w.draggable=document.body.classList.contains('editing');
+    w.innerHTML='<button class="wclose">×</button><span class="whandle">⠿</span><span class="wresize"></span>'+
+      '<div class="wtop"><span class="wlabel">PESO</span><span class="delta down">↓ 0.4%</span></div>'+
+      '<div class="mrow"><span class="minring"></span>'+
+      '<span class="mval"><span class="v mono">82.4<i>kg</i></span><span class="c">meta · 80 kg</span></span></div>';
+    grid.insertBefore(w, document.getElementById('addSlot'));
+  }
+  document.getElementById('addBtn').addEventListener('click',addWidget);
+  document.getElementById('addSlot').addEventListener('click',()=>{ if(!document.body.classList.contains('editing'))setEditing(true); addWidget(); });
+
+  // ---- readiness count-up + anillo (§8: ease-out expo, 800ms, datos en tabular-nums)
+  (function(){
+    const T=78,C=490,ring=document.getElementById('ring'),el=document.getElementById('score');
+    const off=C-(C*(T/100));
+    // prefers-reduced-motion: sin conteo, mostrar el valor final directo
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+      el.textContent=T;ring.style.strokeDashoffset=off;return;}
+    let s=null;const ease=t=>1-Math.pow(1-t,5);  // ease-out fuerte (expo-ish)
+    function step(ts){if(!s)s=ts;const p=Math.min((ts-s)/800,1),e=ease(p);
+      el.textContent=Math.round(T*e);ring.style.strokeDashoffset=C-(C*(T/100)*e);
+      if(p<1)requestAnimationFrame(step);else{el.textContent=T;ring.style.strokeDashoffset=off;}}
+    requestAnimationFrame(step);
+  })();
+</script>
+</body>
+</html>

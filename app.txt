@@ -1,0 +1,13 @@
+¿Qué es? Una Web App independiente construida sobre el stack MERN (MongoDB, Express, React, Node.js) enfocada en la analítica biométrica inteligente y la autorregulación del entrenamiento.
+
+El Flujo de Datos (Estrategia "Pull"): El usuario ve sus datos en crudo en la web (pasos, sueño, HRV, peso) extraídos de su dispositivo inteligente. Al pulsar "Sincronizar", se activa un Atajo de iOS mediante el plan base de Health Auto Export que recopila el JSON de Salud de Apple y lo envía de vuelta mediante un HTTP POST a tu backend de Node.js.
+
+El Valor Diferencial (Roles de IA): A través de una IA integrada (modelo por decidir), la aplicación actúa como un "entrenador bajo demanda". Analiza la biometría actual frente al histórico de la base de datos y adapta sus conclusiones según el rol/objetivo que el usuario tenga configurado en su perfil (los enfoques exactos de cada rol se definirán más adelante):
+
+Powerlifting
+
+Hipertrofia
+
+Salud General
+
+Optimización de Costes (Tokens): Para mantener la infraestructura optimizada y eficiente, el backend preprocesará las medias matemáticas en JavaScript antes de enviarlas a la IA, forzará respuestas en formato JSON estructurado corto y cacheará los análisis del día en MongoDB para evitar llamadas redundantes si los datos biométricos no han cambiado significativamente.
