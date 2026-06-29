@@ -107,8 +107,80 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-29 · Alinear el sistema de diseño con la LANDING
+
+- **Decisión (del usuario):** la app debe seguir el estilo de la **landing** (`logos/SmartPeak
+  Landing.html`): **misma letra, mismos colores, misma estructura**, manteniendo un mínimo el
+  tono Apple. Cambios concretos aplicados:
+  1. **Tipografía**: la UI pasa de la fuente del sistema a **Space Grotesk**; los datos y los
+     **eyebrows/labels técnicos** (mayúsculas) van en **Space Mono** (utilidad `.eyebrow`). El
+     sistema queda solo como *fallback*. (Deroga el veto previo "usar la fuente del sistema".)
+  2. **Paleta**: de "negro iOS" a **tinta** (oscuro: `--bg #0E0F12`…) / **papel** (claro:
+     `--bg #EFEFEC`…), valores copiados tal cual de la landing. `--accent` monocromo = blanco/tinta
+     (el botón blanco de la landing).
+  3. **Readiness**: ~~pasa de anillo a barra lineal~~ → **REVERTIDO el mismo día** (ver entrada
+     siguiente): vuelve el **anillo**, ahora con **color por estado**.
+  4. **Coach IA monocromo**: se **retira el gradiente "Apple Intelligence"** (token `--ai-grad`,
+     barra superior, badge en gradiente, LED de color). El coach se distingue por superficie
+     elevada + contenido + LED neutro. (Deroga "mantener el gradiente reservado al coach IA".)
+  5. **Marca**: el "pico" (chevron) entra en el wordmark/header y como favicons; assets en
+     `client/public/` y `client/public/brand/`.
+- **Consultado al usuario (3 bifurcaciones donde la landing chocaba con reglas duras):**
+  - **Color de los datos** → "**color solo en datos**" (cada métrica su `--m-*`), por la utilidad
+    de escaneo de un dashboard real. La opción **monocromo total** (100% como la landing) queda
+    **anotada como alternativa futura** (DESIGN.md §3).
+  - **Readiness** → barra lineal (como la landing).
+  - **Coach** → monocromo (sin gradiente).
+- **Archivos tocados:** `client/index.html` (fuentes/theme-color/favicons), `tokens.css`,
+  `tailwind.config.js` (quita `bg-ai-grad`), `styles/index.css` (`.eyebrow`, coach monocromo),
+  `ReadinessWidget` (anillo→barra), `MetricWidget`/`TrendWidget`/`AppHeader`/`CoachWidget`
+  (eyebrows mono), `PeakMark`/`Wordmark` nuevos, `mockup-mono.html` reescrito, `DESIGN.md` y
+  `CLAUDE.md §5`.
+- **Alternativas descartadas:** monocromo total ya (se pospone); mantener el anillo de Readiness
+  como firma (se cambia a barra por fidelidad a la landing); conservar el gradiente IA (rompía la
+  coherencia con la landing).
+
+---
+
+### 2026-06-29 · Colores por métrica `--m-*` DEFINIDOS
+
+- **Decisión (del usuario):** fijar el color por métrica para los valores (recuperación, sueño,
+  VFC, FC reposo, pasos, peso). Antes eran placeholders iOS provisionales.
+- **Hallazgo importante:** el usuario pedía "usar de referencia una landing con color en los
+  anillos", pero **ambos HTML de `logos/` (landing y logo) son 100% monocromos** (solo neutros
+  tinta/papel + el coral del toast de error del bundler). **No hay paleta de color que copiar.**
+  Por tanto la paleta se **diseñó** para armonizar con la marca, no se extrajo.
+- **Paleta (dark / papel)** — ver DESIGN.md §3b:
+  rdy `#0A84FF/#0A78E6` · hrv `#2BC9B8/#0E9484` · rhr `#FF6482/#E23E64` ·
+  sleep `#8278F6/#5F58E0` · steps `#FF9F0A/#C2700A` · weight `#E5B83C/#9C7A1A`.
+- **Criterios:** hues separados; distintos de `--pos`/`--neg` (la HRV ya no es el verde de señal
+  ni la FC reposo el rojo de señal; el sueño ya no es casi el azul de readiness); legibles en
+  ambos temas (papel usa variantes más profundas). Verificado por screenshot del mockup en
+  oscuro y claro.
+- **Alternativas descartadas:** mantener los placeholders iOS (colisionaban con las señales);
+  monocromo total (el usuario elige color en los datos — queda como opción futura, abajo).
+
+### 2026-06-29 · Readiness vuelve a ANILLO, con color por estado
+
+- **Decisión (del usuario):** descartar la barra lineal en Preparación y **volver al anillo**;
+  además, el anillo debe tener **otro color** que el azul fijo de antes.
+- **Resolución:** el **color del anillo refleja el ESTADO** de recuperación — verde `--pos`
+  (Recuperado) / ámbar `--warn` (Moderado) / rojo `--neg` (Fatiga). El número del centro sigue
+  neutro (el aro da el color). La **mini-barra del rail** (CompactReadiness) también pasa a
+  colorearse por estado, para coherencia en toda la app (se le pasa `state` desde AppLayout→Rail).
+- **`--m-rdy`** (azul) deja de pintar el anillo; queda **reservado** para gráficas de readiness
+  (p. ej. su tendencia). Sigue definido en tokens.
+- **Archivos:** `ReadinessWidget.tsx` (barra→anillo, stroke por estado), `CompactReadiness.tsx`
+  (+`state`, barra por estado), `Rail.tsx`/`AppLayout.tsx` (plumbing de `state`), `mockup-mono.html`
+  (anillo + JS de dashoffset + rail verde), `DESIGN.md §1/§3b/§7/§8`.
+- **Nota:** la landing **no** tiene anillo de readiness coloreado (es monocroma); el patrón
+  "anillo por estado" se diseñó aquí.
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.
 - Enfoques de cada rol (Powerlifting / Hipertrofia / Salud General).
-- Colores por métrica `--m-*` (provisionales en DESIGN.md §3b).
+- **Monocromo total** (datos incluidos, 100% como la landing): alternativa abierta a "color solo
+  en datos" (decisión 2026-06-29).

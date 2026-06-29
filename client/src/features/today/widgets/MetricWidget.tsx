@@ -48,9 +48,7 @@ export function MetricWidget({
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="disp text-[12px] font-semibold uppercase tracking-[0.01em] text-text-muted">
-          {data.label}
-        </span>
+        <span className="eyebrow text-[10.5px]">{data.label}</span>
         <span
           className="mono inline-flex items-center gap-[3px] text-[12px] font-bold"
           style={{ color: delta.colorVar }}

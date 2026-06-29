@@ -1,10 +1,11 @@
 import { Button } from '../components/ui/Button';
+import { PeakMark } from '../components/PeakMark';
 
 // Header de cada pestaña (DESIGN.md §6). Estructura del mockup canónico:
 // wordmark "SmartPeak · <Tab>" (fuente sistema) + estado de sync (punto --pos +
 // "Sincronizado · hace X") arriba; a la derecha la píldora de ROL del user, el
 // botón "Editar" (DESHABILITADO — el modo edición es otra iteración) y el botón
-// primario "Sincronizar" (.btn). Debajo, la tira meta fina (fecha · fuente).
+// primario "Sincronizar" (.btn).
 //
 // Responsive mobile-first: en móvil el wordmark+sync van arriba y los controles
 // bajan a una segunda fila; el botón "Editar" se oculta en móvil (es secundario
@@ -19,10 +20,6 @@ interface AppHeaderProps {
   roleLabel?: string;
   /** Muestra el botón primario "Sincronizar". */
   showSync?: boolean;
-  /** Texto de la tira meta (fecha). Si se omite, no se renderiza la tira. */
-  metaDate?: string;
-  /** Fuente de los datos para la tira meta (p. ej. "Apple Health"). */
-  metaSource?: string;
 }
 
 export function AppHeader({
@@ -30,14 +27,13 @@ export function AppHeader({
   syncStatus,
   roleLabel,
   showSync = false,
-  metaDate,
-  metaSource,
 }: AppHeaderProps) {
   return (
     <header className="border-b border-line">
       <div className="flex flex-col gap-3 px-[18px] pt-[16px] sm:px-[30px] lg:flex-row lg:items-end lg:justify-between lg:gap-5 lg:pb-[14px] lg:pt-[18px]">
         <div>
-          <div className="flex items-baseline gap-[11px]">
+          <div className="flex items-center gap-[10px]">
+            <PeakMark size={20} className="text-text" />
             <h1 className="disp text-[21px] font-bold tracking-[-0.02em] text-text">
               SmartPeak
             </h1>
@@ -74,20 +70,6 @@ export function AppHeader({
           </div>
         )}
       </div>
-
-      {metaDate && (
-        <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2 border-t border-line px-[18px] py-[9px] disp text-[11px] tracking-[0.01em] text-text-faint sm:px-[30px]">
-          <span>{metaDate}</span>
-          {metaSource && (
-            <span>
-              FUENTE{' '}
-              <b className="font-semibold text-text-muted">
-                {metaSource.toUpperCase()}
-              </b>
-            </span>
-          )}
-        </div>
-      )}
     </header>
   );
 }

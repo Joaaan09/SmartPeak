@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-06-29 — Realineado del sistema de diseño con la LANDING
+
+- **Petición del usuario**: que la app siga el estilo de la landing (`logos/SmartPeak Landing.html`)
+  — misma letra, mismos colores, misma estructura — manteniendo un mínimo el tono Apple; adaptar
+  tanto los documentos de directrices como el dashboard.
+- **Extracción del sistema de la landing**: es un export "bundled" (SVG + JS). Identificado por
+  grep/render: fuentes **Space Grotesk** (UI) + **Space Mono** (datos/eyebrows), tokens tinta
+  (`--bg #0E0F12`, `--surface #16181D`, `--text #F4F4F1`…) / papel (`#EFEFEC`/`#FFFFFF`/`#14161B`…),
+  chrome **100% monocromo** (el coral `#FF8A80` era solo el toast de error del bundler, no diseño),
+  readiness como **barra lineal**, coach en burbujas monocromas. El "pico" (chevron) es la marca.
+- **3 dilemas consultados al usuario** (la landing chocaba con reglas duras de DESIGN.md):
+  color de datos → **color solo en datos** (monocromo total anotado como opción futura);
+  readiness → **barra lineal**; coach → **monocromo** (sin gradiente IA). Registrado en
+  `decisiones.md`.
+- **Implementado** (orquestador, con contexto cargado): `index.html` (Google Fonts + theme-color
+  `#0E0F12` + favicons), `tokens.css` (paleta tinta/papel + fuentes + accent monocromo, sin
+  `--ai-grad`), `tailwind.config.js` (sin `bg-ai-grad`), `styles/index.css` (utilidad `.eyebrow`,
+  coach sin gradiente, keyframe `pulse-led`), `ReadinessWidget` (anillo→barra lineal con count-up),
+  `MetricWidget`/`TrendWidget`/`AppHeader`/`CoachWidget` (eyebrows mono, coach monocromo),
+  nuevos `PeakMark`/`Wordmark` (pico de marca), assets en `client/public[/brand]`.
+- **Docs**: `DESIGN.md` (§0/§1/§2/§3/§6/§7/§8/§9 actualizados, §3c gradiente RETIRADO),
+  `CLAUDE.md §5`, `mockup-mono.html` reescrito al nuevo sistema.
+- **Verificación**: `typecheck` + `lint` en verde; **screenshot headless** del `mockup-mono.html`
+  en oscuro y claro → fiel a la landing. `revisor` lanzado sobre el cambio.
+- **Sin commitear** (a la espera del OK visual del usuario).
+
 ## 2026-06-27 (noche) — Arranque MERN + Autenticación
 
 - **Decisiones de arranque** (vía pregunta al usuario): stack en **TypeScript**, onboarding

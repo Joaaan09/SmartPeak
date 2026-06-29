@@ -23,9 +23,12 @@
 ## Fase 1 — Bloquear el sistema de diseño
 
 - [x] Tokens CSS (DESIGN.md §2–4) + config de Tailwind
-- [x] Cargar fuente mono (UI = fuente del sistema)
+- [x] Cargar fuentes de marca (Space Grotesk UI + Space Mono datos/eyebrows) — alineado con la landing
+- [x] **Realinear el sistema con la landing** (2026-06-29): paleta tinta/papel, tipografía,
+  readiness en barra lineal, coach monocromo, pico de marca. Docs + mockup actualizados.
 - [x] Pestaña `Hoy`: dashboard de widgets + Readiness + coach (base: mockup-mono.html) — modo VISTA
 - [x] Shell: rail desktop + tab bar móvil con pestaña activa
+- [ ] **OK visual del usuario** del realineado (375px + desktop, ambos temas) y commit
 - [ ] **Modo edición** del dashboard (jiggle/drag/resize/añadir-quitar + persistencia layout) — Iteración B
 - [ ] Iterar SOLO sobre `Hoy` hasta que el tono sea correcto (validar render real en navegador)
 

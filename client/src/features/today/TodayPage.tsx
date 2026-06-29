@@ -6,7 +6,7 @@ import { CoachWidget } from './widgets/CoachWidget';
 import { MetricWidget } from './widgets/MetricWidget';
 import { TrendWidget } from './widgets/TrendWidget';
 import { todayData } from './data';
-import { metaDate, timeAgo } from './format';
+import { timeAgo } from './format';
 
 // Pestaña Hoy (DESIGN.md §5/§7) — dashboard de widgets en MODO VISTA.
 //
@@ -35,8 +35,6 @@ export function TodayPage() {
         syncStatus={syncStatus}
         roleLabel={roleLabel}
         showSync
-        metaDate={metaDate(sync.lastSyncedAt)}
-        metaSource={sync.source}
       />
 
       <div className="px-[18px] pb-[22px] pt-[18px] sm:px-[24px]">

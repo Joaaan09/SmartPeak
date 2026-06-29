@@ -4,13 +4,16 @@
 > pantalla nueva se construye DENTRO de este sistema, no se improvisa. Si algo no está
 > aquí, se decide y se añade aquí primero, luego se implementa.
 >
-> Referencia viva: [mockup-mono.html](mockup-mono.html) es la implementación canónica de
-> la pestaña `Hoy`. Si el doc y el mock divergen, gana lo que se decida y se actualizan ambos.
+> Referencia viva: la **landing** (`logos/SmartPeak Landing.html`) es ahora el **norte visual**
+> de la marca (tipografía, paleta, estructura). [mockup-mono.html](mockup-mono.html) es la
+> implementación canónica de la pestaña `Hoy`, ya alineada con la landing. Si el doc y el mock
+> divergen, gana lo que se decida y se actualizan ambos.
 
-Tono base: **Apple-grade · premium · calmado**. SmartPeak se siente como una app nativa de
-Apple (Salud / Fitness): superficies neutras y limpias, mucho aire pero con datos densos y
-legibles, y **el color vive solo en los datos** (cada métrica tiene su color). Tiene IA
-integrada y eso se nota en un detalle premium (no en ruido). Confiado, sobrio, no clínico-agresivo.
+Tono base: **marca SmartPeak · premium · calmado**, alineado con la landing y con **un mínimo
+de aire Apple**. Superficies tinta (oscuro) / papel (claro) limpias, mucho aire pero con datos
+densos y legibles. Tipografía de marca (**Space Grotesk** + **Space Mono**), chrome **monocromo**
+y **el color vive solo en los datos** (cada métrica tiene su color). Tiene IA integrada y se nota
+por el contenido, no por color. Confiado, sobrio, no clínico-agresivo.
 
 ---
 
@@ -22,8 +25,9 @@ Estas reglas existen para evitar el look genérico de IA. No las rompas sin actu
   base de comportamiento (accesibilidad), pero el estilo lo pones tú con estos tokens.
 - ❌ **Nada de un color de marca que domine la app.** No hay acento de marca. El chrome
   (botones, nav, ticks) es **monocromo**; el color aparece **solo en los datos** (§3).
-- ❌ **Nada de gradientes decorativos.** El único gradiente permitido es el **gradiente IA**
-  y solo en el componente de coach (§3/§7b).
+- ❌ **Nada de gradientes decorativos.** Como la landing, **no hay gradientes** en el chrome
+  (el coach es monocromo — decisión 2026-06-29). El único gradiente tolerado es el de relleno
+  bajo una **gráfica de datos**, en el color `--m-*` de esa métrica (§7b).
 - ❌ **Nada de rejilla de 3 columnas "icono + título + párrafo".**
 - ❌ **Nada de cards iguales en rejilla simétrica.** Bento intencional con jerarquía (§5).
 - ❌ **Nada de cifras con fuente proporcional.** Toda métrica usa la mono con `tabular-nums`.
@@ -41,8 +45,9 @@ Las skills instaladas (`emil-design-eng`, `review-animations`, `impeccable`,
 No adoptes de ellas:
 - ❌ Subir los *dials* de variance / "toma un riesgo estético audaz" / asimetría artsy
   (taste-skill por defecto 8/6/4) → SmartPeak es **calmado**: variance baja, motion bajo.
-- ❌ Fuentes display "con personalidad" / "la fuente del sistema es aburrida" → SmartPeak usa
-  **fuente del sistema + mono para datos** a propósito (§2).
+- ❌ Fuentes display "con personalidad" inventadas a capricho → la tipografía está **fijada por
+  la marca/landing**: **Space Grotesk** (UI) + **Space Mono** (datos y eyebrows). No se cambian
+  por gusto; la del sistema es solo *fallback* (§2).
 - ❌ El ban del *hero-metric* de `impeccable` → aquí **el dato es el héroe** (§1); mostramos
   **datos reales** del usuario, no cifras decorativas. Solo evitamos el cliché SaaS (número
   grande + gradiente + stats inventadas).
@@ -58,10 +63,11 @@ No adoptes de ellas:
 2. **Calma premium.** Superficies neutras, aire generoso, jerarquía clara. Ni recargado ni vacío.
 3. **El color solo significa.** No hay color decorativo: cada color identifica una métrica
    (§3) o una señal (`--pos`/`--neg`/`--warn`). Quita el color de los datos y el chrome sigue
-   siendo gris neutro — y la app sigue siendo SmartPeak por su tipografía, su rejilla de
-   widgets y el anillo de Readiness.
-4. **La IA, presente pero contenida.** El componente de coach es el único sitio con el
-   gradiente IA. Comunica "esto es inteligente" sin teñir la app.
+   siendo neutro (tinta/papel) — y la app sigue siendo SmartPeak por su tipografía (Space
+   Grotesk + Space Mono), su rejilla de widgets y el anillo de Readiness.
+4. **La IA, presente pero contenida.** El coach se distingue por su superficie elevada y su
+   contenido, **no por color** (es monocromo, como la landing). Comunica "esto es inteligente"
+   sin teñir la app.
 5. **Un movimiento bueno, no diez.** El micro-movimiento comunica cambio de dato (un número
    que cuenta, un anillo que se llena), no decora. Excepción: el *jiggle* del modo edición (§5).
 
@@ -69,16 +75,22 @@ No adoptes de ellas:
 
 ## 2. Tipografía
 
-Dos roles. La UI usa la **fuente del sistema** (look Apple nativo); los datos usan **mono**.
+Dos roles, **iguales que la landing** (cargadas vía Google Fonts):
 
-- **UI / display** (títulos, navegación, texto, labels): **fuente del sistema**.
-  - Stack: `-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif`.
-  - En Apple resuelve a **SF Pro** → es lo que da el tono nativo. Pesos 400 / 500 / 600 / 700.
-- **Cifras / datos / código** (toda métrica, ejes, tablas): una **mono** con `tabular-nums`.
-  - Recomendada: **Space Mono** (la del mock). Alternativas: JetBrains Mono, IBM Plex Mono.
+- **UI / display** (títulos, navegación, cuerpo, botones): **Space Grotesk**.
+  - Stack: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif`.
+  - La del sistema es solo *fallback* (mantiene un mínimo el tono Apple si la fuente falla).
+    Pesos 400 / 500 / 600 / 700.
+- **Cifras / datos + eyebrows técnicos**: **Space Mono** con `tabular-nums`.
+  - Toda métrica, eje, tabla **y los labels técnicos en mayúsculas** (eyebrows de sección y de
+    widget) van en Space Mono.
 
-Regla de oro: **cualquier número que sea un dato va en la mono con
-`font-variant-numeric: tabular-nums`.** El resto (labels, copy, botones) va en la del sistema.
+Dos reglas de oro:
+1. **Cualquier número que sea un dato va en Space Mono** con `font-variant-numeric: tabular-nums`.
+2. **Los eyebrows/labels técnicos van en Space Mono, MAYÚSCULAS, `letter-spacing:.1em`,
+   peso 700, `--text-muted`** (utilidad `.eyebrow`). Es la firma tipográfica de la landing
+   (p. ej. `PREPARACIÓN`, `SUEÑO`, `COACH IA · POWERLIFTING`).
+   El resto (títulos, copy de frase, botones) va en Space Grotesk.
 
 ### Escala tipográfica (rem, base 16px)
 ```
@@ -92,28 +104,32 @@ Regla de oro: **cualquier número que sea un dato va en la mono con
 --text-3xl:  3.75rem   (60px)  · la cifra-héroe (readiness)
 ```
 Labels: `--text-2xs`/`--text-xs`, peso 600, `--text-muted`. Apple usa poco mayúsculas
-gritadas: prefiere **Capitalización normal** salvo en la tira meta y labels técnicos.
+gritadas: prefiere **Capitalización normal** salvo en los labels técnicos (eyebrows).
 
 ---
 
 ## 3. Color — neutro + color solo en los datos
 
-**No hay color de marca.** Las superficies son grises de sistema (estilo iOS) y el chrome es
-monocromo. El color entra exclusivamente por: (a) el **color de cada métrica**, (b) las
-**señales** semánticas y (c) el **gradiente IA**.
+**No hay color de marca.** Las superficies son neutras (**tinta** en oscuro, **papel** en claro,
+igual que la landing) y el chrome es monocromo. El color entra exclusivamente por: (a) el
+**color de cada métrica** y (b) las **señales** semánticas. **No hay gradiente IA** (el coach es
+monocromo desde 2026-06-29).
+
+> **Nota (alternativa abierta):** se valoró un **monocromo total** (datos incluidos, 100% como la
+> landing). De momento se mantiene "color solo en datos" por la utilidad de escaneo en un
+> dashboard real (modelo Apple Fitness); el monocromo total queda **anotado como opción futura**.
 
 ### Tokens semánticos (lo que consumen los componentes)
 ```css
 :root {
-  --bg / --surface / --surface-2      /* superficies neutras */
+  --bg / --surface / --surface-2      /* superficies neutras (tinta/papel) */
   --line / --line-strong              /* hairlines y divisores */
   --text / --text-muted / --text-faint
   --accent / --accent-text            /* énfasis de UI MONOCROMO (botón, tick). NO es marca */
   --pos / --neg / --warn              /* señales fijas: verde / rojo / ámbar */
   --m-rdy / --m-hrv / --m-rhr /       /* COLOR POR MÉTRICA — provisionales (§3b) */
   --m-sleep / --m-steps / --m-weight
-  --ring-track                        /* pista del anillo sin rellenar */
-  --ai-grad                           /* gradiente IA (rosa→morado→azul), solo coach */
+  --ring-track                        /* pista de la barra/anillo sin rellenar */
   --hi / --shadow / --r / --r-sm      /* luz superior 1px · sombra · radios */
 }
 ```
@@ -124,47 +140,52 @@ Reglas:
 - Los `--m-*` solo se usan en su métrica (anillo + trazo de su gráfica). Ningún componente
   de chrome usa un `--m-*`.
 
-### Temas (ambos a grado Apple)
+### Temas (valores copiados TAL CUAL de la landing)
 ```
-Dark (default):
-  --bg #000000  --surface #1C1C1E  --surface-2 #2C2C2E
-  --line #38383A  --line-strong #48484A
-  --text #F5F5F7  --text-muted #98989F  --text-faint #636366
-  --accent #F5F5F7  --accent-text #1C1C1E
+Dark / "tinta" (default):
+  --bg #0E0F12  --surface #16181D  --surface-2 #1C1F26
+  --line #262931  --line-strong #333845
+  --text #F4F4F1  --text-muted #9A9C9F  --text-faint #65676C
+  --accent #F4F4F1  --accent-text #14161B
   --pos #30D158  --neg #FF453A  --warn #FFD60A
-  --ring-track #2C2C2E   --hi rgba(255,255,255,.05)   --shadow none
+  --ring-track #20232A   --hi rgba(255,255,255,.05)   --shadow none
 
-Light ("Paper"):
-  --bg #F2F2F7  --surface #FFFFFF  --surface-2 #FFFFFF
-  --line #E5E5EA  --line-strong #D1D1D6
-  --text #1D1D1F  --text-muted #8A8A8E  --text-faint #B0B0B5
-  --accent #1D1D1F  --accent-text #FFFFFF
+Light / "papel":
+  --bg #EFEFEC  --surface #FFFFFF  --surface-2 #F6F6F3
+  --line #E6E6E1  --line-strong #D8D8D2
+  --text #14161B  --text-muted #5A5C61  --text-faint #9D9E98
+  --accent #14161B  --accent-text #FFFFFF
   --pos #34C759  --neg #FF3B30  --warn #FF9F0A
-  --ring-track #E9E9EE   --hi transparent   --shadow 0 1px 2px rgba(0,0,0,.05), 0 8px 22px rgba(0,0,0,.05)
+  --ring-track #E6E6E1   --hi transparent   --shadow 0 1px 2px rgba(0,0,0,.05), 0 8px 22px rgba(0,0,0,.05)
 ```
+(`--line-strong`, `--ring-track` y los `--m-*` no los define la landing; se derivan aquí.)
 El usuario **solo** alterna claro/oscuro. No hay selector de acento (se retiró): el color es
 del dato, no del usuario.
 
-### 3b. Color por métrica — **PROVISIONALES (por definir)**
-Cada estadística lleva su color para diferenciarse (modelo Apple Fitness). Los valores
-actuales son **placeholders**; cuando se decidan, se cambian en un único sitio (los `--m-*`).
+### 3b. Color por métrica — **DEFINIDOS (2026-06-29)**
+Cada estadística lleva su color para diferenciarse (modelo Apple Fitness). **Importante:** la
+landing es monocroma y **no** define estos colores; se **diseñaron aquí** para armonizar con la
+marca tinta/papel. Se cambian en un único sitio (los `--m-*` de `tokens.css`).
 ```
---m-rdy   #0A84FF  readiness
---m-hrv   #30D158  HRV
---m-rhr   #FF375F  FC reposo
---m-sleep #64D2FF  sueño
---m-steps #FF9F0A  pasos
---m-weight #8E8E93 peso
+                 dark / tinta   light / papel   métrica
+--m-rdy           #0A84FF        #0A78E6         azul — RESERVADO para gráficas de readiness;
+                                                 el ANILLO de Preparación va por estado (§7)
+--m-hrv           #2BC9B8        #0E9484         VFC — teal
+--m-rhr           #FF6482        #E23E64         FC en reposo — rosa
+--m-sleep         #8278F6        #5F58E0         Sueño — índigo
+--m-steps         #FF9F0A        #C2700A         Pasos — naranja
+--m-weight        #E5B83C        #9C7A1A         Peso — oro
 ```
-Al fijarlos: que sean distinguibles entre sí, legibles sobre `--surface` en ambos temas, y
-que no choquen semánticamente (p. ej. evita verde puro para una métrica "mala").
+Criterios aplicados: (1) **hues separados** entre sí (azul · teal · rosa · índigo · naranja ·
+oro); (2) **distintos de las señales** `--pos`(verde)/`--neg`(rojo) para no confundir el color de
+una métrica con su delta; (3) **legibles sobre `--surface` en ambos temas** → el tema papel usa
+variantes más profundas (los colores vivos pierden contraste sobre blanco). Regla de uso: cada
+`--m-*` aparece **solo en el dato** de su métrica (anillo, sparkline, barra), nunca en el chrome.
 
-### 3c. Gradiente IA
-```
---ai-grad: linear-gradient(115deg, #FF6FD8, #A78BFA, #5AC8FA);  /* estilo Apple Intelligence */
-```
-Uso **exclusivo** del componente de coach (§7b): barra superior de 3px, texto del badge
-(con `background-clip:text`) y el LED pulsante. En ningún otro sitio.
+### 3c. ~~Gradiente IA~~ — RETIRADO (2026-06-29)
+El coach es **monocromo** como la landing: sin gradiente, sin barra superior de color. La señal
+de "inteligente" la dan la superficie elevada (`--surface-2`), el eyebrow técnico y un LED
+neutro que respira. Único gradiente tolerado: el relleno bajo una gráfica, en su `--m-*` (§7b).
 
 ---
 
@@ -220,8 +241,9 @@ Rail estrecho a la izquierda (≈66px), **sin iconos Lucide**.
   sincronizas desde un Atajo de iOS). Activa marcada por color/peso, estilo nativo.
 
 ### Header de cada pestaña
-Wordmark `SmartPeak · Hoy` discreto + estado de sincronización. Debajo, una **tira meta** fina
-(fecha · fuente). El control primario ("Sincronizar") es un botón **píldora monocromo**.
+Wordmark **pico + `SmartPeak · Hoy`** discreto (el "pico" de la marca, ver `client/public/brand`)
++ estado de sincronización. El control primario ("Sincronizar") es un botón **píldora monocromo**
+(relleno `--accent`, como el botón blanco de la landing).
 
 ### Pestañas
 `Hoy` (dashboard de widgets) · `Tendencias` (históricos HRV/sueño/peso) · `Entreno`
@@ -229,24 +251,34 @@ Wordmark `SmartPeak · Hoy` discreto + estado de sincronización. Debajo, una **
 
 ---
 
-## 7. Componente firma — Readiness
+## 7. Componente firma — Readiness (anillo · color = estado)
 
-- Score **0–100** (HRV + sueño + RHR). Cifra-héroe en `--text-3xl`, mono, color `--text`
-  (neutro, **no** el color del anillo: el número se lee, el anillo da el color).
-- **Anillo** de progreso en su color `--m-rdy`, con count-up al cargar (§8).
-- Etiqueta de estado debajo (`Recuperado` / `Moderado` / `Fatiga`) coloreada con
-  `--pos`/`--warn`/`--neg`.
-- Versión compacta (número + barra) vive en el rail, presente en toda la app.
+Representación **principal = anillo de progreso**, y su **color refleja el ESTADO de
+recuperación** (decisión 2026-06-29): **verde** `--pos` (Recuperado) / **ámbar** `--warn`
+(Moderado) / **rojo** `--neg` (Fatiga). Así el color del aro ya comunica cómo estás, no es un
+azul fijo. Estructura:
+
+- **Anillo** (track `--ring-track`, trazo en el color del estado), con count-up + llenado en
+  sincronía al cargar (§8). En el centro: cifra-héroe **0–100** (HRV + sueño + RHR) en Space
+  Mono, color `--text` (**neutra** — el número se lee, el anillo da el color) + eyebrow
+  `PREPARACIÓN` (`.eyebrow`).
+- Debajo: etiqueta de estado (`Recuperado`/`Moderado`/`Fatiga`) en el mismo color del estado +
+  subtítulo en `--text-muted`.
+- Versión compacta (número + mini-barra, **también coloreada por estado**) vive en el rail.
+- `--m-rdy` (azul) queda **reservado** para gráficas de readiness (p. ej. su tendencia), no para
+  el anillo (que va por estado).
 
 ### 7b. Métricas con anillo
 Cada métrica (HRV, RHR, sueño, pasos, peso…) se representa como **anillo + cifra**, con el
-color de su token `--m-*`. El anillo se puede hacer con `conic-gradient` + máscara radial
-(ver mock). El delta (↑/↓ %) va como texto en color `--pos`/`--neg`/`--text-muted`.
+color de su token `--m-*` (el color sigue viviendo en el dato). El anillo se hace con
+`conic-gradient` + máscara radial (ver mock). El delta (↑/↓ %) va como texto en color
+`--pos`/`--neg`/`--text-muted`. La tendencia es una **gráfica de línea** en `--m-*` con relleno
+de área degradado en ese mismo color.
 
-### 7c. Coach IA
-Única superficie elevada (`--surface-2`) con el **gradiente IA** (§3c): barra superior de
-3px, badge con texto en gradiente y LED pulsante. Contiene el plan del día y chips de datos
-(carga, HRV 7d, racha).
+### 7c. Coach IA — monocromo
+Superficie elevada (`--surface-2`), **sin gradiente** (decisión 2026-06-29): eyebrow técnico
+`COACH IA · <ROL>` (`.eyebrow`) con un **LED neutro** (`--text-muted`) que respira (§8), título
+en Space Grotesk, plan del día y chips de datos en Space Mono (carga, HRV 7d, racha).
 
 ---
 
@@ -284,16 +316,16 @@ decorativo. `review-animations` es la rúbrica de revisión.
 - **Count-up (cifras):** el número cuenta hasta su valor en 500–800ms con `--ease-out`. La cifra
   va en mono **`tabular-nums`** para que no haya jitter de ancho. Es animación de *llegada de
   dato* (ocasional), permitida; nunca en datos que cambian a alta frecuencia.
-- **Anillos (Readiness y métricas):** `stroke-dashoffset` con `--ease-out`, 500–800ms en la
-  primera carga; al recalcular, transición CSS interrumpible (no keyframe). Sin bounce. El
-  **color** del anillo es su `--m-*`; la cifra del centro es neutra (§7).
+- **Anillos (Readiness y métricas):** `stroke-dashoffset`/`conic-gradient` con `--ease-out`,
+  500–800ms en la primera carga; al recalcular, transición CSS interrumpible (no keyframe). Sin
+  bounce. La cifra del centro es neutra (§7). El **color** del anillo de Readiness es el del
+  **estado** (`--pos`/`--warn`/`--neg`); el de cada métrica es su `--m-*`.
 - **Press:** todo elemento accionable hace `transform: scale(0.97)` en `:active`, ~140ms
   `--ease-out-ui`.
 - **Stagger de widgets:** entrada escalonada 30–80ms (`animation-delay: calc(var(--i)*50ms)`),
   cap total ~500ms; decorativo, no bloquea interacción. Umbral de "instantáneo": ~80ms.
 - **Modo edición:** *jiggle* sutil tipo iOS (solo en ese modo).
-- **Coach:** LED del badge en pulso lento (≈2.6s). El gradiente IA es la **única** zona con
-  gradiente (§3c).
+- **Coach:** LED **neutro** (`--text-muted`) del eyebrow en pulso lento (≈2.6s). Sin gradiente.
 - **Transición de pestaña:** crossfade 150–250ms + leve translate, o nada. Indicador de tab
   activo deslizante. No animar la navegación si pasa a ser de alta frecuencia.
 - **Springs Apple-style** (`bounce` 0.1–0.3) solo para gestos/drag (p. ej. pull-to-refresh del
@@ -313,7 +345,7 @@ decorativo. `review-animations` es la rúbrica de revisión.
 
 **Fase 1 — Bloquear el sistema.** Antes de cualquier feature:
 1. Implementa los tokens (§2–4) como CSS variables + config de Tailwind.
-2. Carga la fuente mono (la UI usa la del sistema).
+2. Carga las fuentes de marca (Space Grotesk + Space Mono); el sistema es solo *fallback*.
 3. Construye la pestaña `Hoy` (dashboard de widgets + Readiness + coach) como vitrina. Itera
    SOLO sobre esto hasta que el tono sea correcto. Base: [mockup-mono.html](mockup-mono.html).
 4. Construye el shell (rail + tab bar móvil) con la pestaña activa.

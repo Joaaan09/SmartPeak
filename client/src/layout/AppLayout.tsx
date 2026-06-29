@@ -18,7 +18,10 @@ import { todayData } from '../features/today/data';
 export function AppLayout() {
   return (
     <div className="flex min-h-[100dvh] bg-bg lg:h-[100dvh] lg:overflow-hidden">
-      <Rail readinessScore={todayData.readiness.score} />
+      <Rail
+        readinessScore={todayData.readiness.score}
+        readinessState={todayData.readiness.state}
+      />
 
       {/* Zona de contenido: en desktop scrollea internamente; en móvil scrollea
           la página y deja hueco para la tab bar (52px + safe-area). */}

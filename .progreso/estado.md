@@ -2,9 +2,17 @@
 
 > Léeme al empezar. Actualízame al terminar cada sesión.
 
-**Última actualización:** 2026-06-28
+**Última actualización:** 2026-06-29
 
 ## Dónde estamos
+
+**Sistema de diseño REALINEADO con la landing de marca (2026-06-29).** La app ya no usa el
+"negro iOS + fuente del sistema"; ahora sigue la landing (`logos/SmartPeak Landing.html`):
+**Space Grotesk** (UI) + **Space Mono** (datos/eyebrows), paleta **tinta/papel**, chrome
+**monocromo sin gradientes**, **Readiness en barra lineal** (antes anillo) y **coach monocromo**
+(retirado el gradiente IA). El color sigue viviendo solo en los datos (`--m-*`). Detalle y los
+3 dilemas consultados (color datos / readiness / coach) en `decisiones.md` (2026-06-29).
+Verificado visualmente con screenshot del `mockup-mono.html` reescrito (oscuro + claro).
 
 **Scaffolding MERN montado y autenticación completa implementada y revisada.** Ya no es solo
 doc + mock: hay app real.
@@ -12,8 +20,9 @@ doc + mock: hay app real.
 - `server/` — Express + TypeScript (ESM) + Mongoose + JWT. Auth completa: modelo `User`
   (con `role`, `sex`, físicos y `preferences.theme`), rutas register/login/refresh/logout/me
   y `PATCH /users/me`. Validación con zod, bcrypt (cost 12), refresh en cookie httpOnly.
-- `client/` — Vite + React 18 + TS + Tailwind v3. **Sistema de diseño bloqueado**: tokens CSS
-  exactos del mockup (oscuro default + `body.paper`), fuente Space Mono, ThemeProvider.
+- `client/` — Vite + React 18 + TS + Tailwind v3. **Sistema de diseño bloqueado y alineado con la
+  landing**: tokens CSS tinta/papel (oscuro default + `body.paper`), **Space Grotesk + Space Mono**,
+  ThemeProvider. Favicons/marca (el "pico") en `client/public`.
   **UI de auth real**: login + **wizard de registro premium de 5 pasos** (Cuenta · Perfil ·
   Objetivo/rol · Físicos · Listo), AuthContext (token en memoria + rehidratación refresh→me),
   rutas protegidas. Primitivos UI reutilizables (Button, TextField, SegmentedControl, etc.).
@@ -32,13 +41,16 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
   pestaña (wordmark, sync, píldora de rol real, "Sincronizar"), tira meta. Rutas anidadas con
   `<Outlet/>`: `/` Hoy + placeholders `/tendencias` `/entreno` `/perfil` (logout en Perfil).
 - `client/src/features/today/*` — dashboard bento (desktop) / stack 2-col (móvil): Readiness
-  (count-up + anillo), Coach IA (gradiente exclusivo), 4 métricas con anillo `--m-*`, tendencia
-  HRV 7d. Widgets reutilizables + `data.ts` mock TIPADO (placeholder hasta el sync biométrico).
+  (count-up + **barra lineal** `--m-rdy`), Coach IA (**monocromo, sin gradiente**), 4 métricas con
+  anillo `--m-*`, tendencia HRV 7d. Eyebrows en mono (`.eyebrow`). Widgets reutilizables +
+  `data.ts` mock TIPADO (placeholder hasta el sync biométrico).
 - Theme toggle movido a la regleta (desktop) + Perfil (móvil). `typecheck/build/lint` en verde.
 
 ## En curso
 
-- Nada a medias. Auth y (shell + Hoy vista) cerrados y mergeados a `staging`.
+- **Realineado de diseño con la landing (2026-06-29): implementado**, en `staging` y **sin
+  commitear**. Pendiente: OK visual del usuario + commit. El `revisor` corrió sobre el cambio
+  (typecheck/lint/build verdes antes de empezar; ver su resultado en el log al cerrar).
 
 ## Siguiente paso (elegir)
 
@@ -61,6 +73,8 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 ## Git / ramas (regla dura en CLAUDE.md §9)
 
 - Desarrollo en `staging` (o ramas de feature → `staging`). `main` solo para validado.
-- **`staging` = `c10ad53`** con auth + (shell + Hoy vista) ya mergeados (vía `feat/scaffold-auth`
-  y `feat/hoy-shell`). **`main` sigue en el baseline `b9851a5`** (a la espera de validación e2e).
+- **`staging`** tiene auth + (shell + Hoy vista) mergeados. **`main` sigue en el baseline**
+  (a la espera de validación e2e).
+- **Realineado de diseño 2026-06-29: cambios sin commitear sobre `staging`** (no se commitea sin
+  pedirlo el usuario). Carpeta `logos/` (assets + landing) sigue *untracked*.
 - Próxima feature: nueva rama desde `staging` (p. ej. `feat/hoy-edit`).

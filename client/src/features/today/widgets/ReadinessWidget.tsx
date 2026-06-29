@@ -2,20 +2,19 @@ import { Widget } from './Widget';
 import { useCountUp } from './useCountUp';
 import type { ReadinessData, ReadinessState } from '../data';
 
-// Widget firma (DESIGN.md §7): anillo grande en --m-rdy con count-up del score
-// (0→valor, 800ms, ease-out expo) y llenado del anillo en sincronía
-// (stroke-dashoffset). La cifra central es NEUTRA (--text): el número se lee, el
-// anillo da el color. Reduced-motion → valor final directo (lo gestiona useCountUp).
+// Widget firma (DESIGN.md §7) — ANILLO de progreso cuyo COLOR refleja el ESTADO de
+// recuperación (decisión 2026-06-29): verde Recuperado / ámbar Moderado / rojo
+// Fatiga. El número central es NEUTRO (--text): el número se lee, el anillo da el
+// color (y de un vistazo el color ya dice cómo estás). Count-up + llenado del
+// anillo en sincronía (800ms, ease-out expo). Reduced-motion → valor/offset final
+// directos (lo gestiona useCountUp).
 
 // Geometría del anillo (idéntica al mockup): r=78 en un viewBox 176×176.
 const RADIUS = 78;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // ≈ 490
 
-// Estado → etiqueta visible (es) + token de señal semántica.
-const stateMeta: Record<
-  ReadinessState,
-  { label: string; colorVar: string }
-> = {
+// Estado → etiqueta visible (es) + token de señal semántica (el color del anillo).
+const stateMeta: Record<ReadinessState, { label: string; colorVar: string }> = {
   recovered: { label: 'Recuperado', colorVar: 'var(--pos)' },
   moderate: { label: 'Moderado', colorVar: 'var(--warn)' },
   fatigue: { label: 'Fatiga', colorVar: 'var(--neg)' },
@@ -63,7 +62,7 @@ export function ReadinessWidget({
             cy="88"
             r={RADIUS}
             fill="none"
-            stroke="var(--m-rdy)"
+            stroke={meta.colorVar}
             strokeWidth="13"
             strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
@@ -74,9 +73,7 @@ export function ReadinessWidget({
           <span className="mono text-[60px] font-bold leading-none tracking-[-0.03em] text-text">
             {value}
           </span>
-          <span className="disp mt-[3px] text-[10px] font-semibold tracking-[0.1em] text-text-faint">
-            READINESS / 100
-          </span>
+          <span className="eyebrow mt-[4px] text-[10px]">Preparación</span>
         </div>
       </div>
 

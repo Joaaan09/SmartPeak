@@ -46,11 +46,8 @@ export default {
           weight: 'var(--m-weight)',
         },
       },
-      backgroundImage: {
-        // Gradiente IA: uso EXCLUSIVO del coach (§3c).
-        'ai-grad': 'var(--ai-grad)',
-      },
       fontFamily: {
+        // UI = Space Grotesk (igual que la landing); datos/labels = Space Mono.
         display: 'var(--display)',
         body: 'var(--body)',
         mono: 'var(--num)',

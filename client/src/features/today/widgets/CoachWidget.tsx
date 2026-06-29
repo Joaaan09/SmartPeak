@@ -2,10 +2,11 @@ import { Fragment, type ReactNode } from 'react';
 import { Widget } from './Widget';
 import type { CoachData } from '../data';
 
-// Widget Coach IA (DESIGN.md §7c): ÚNICA superficie con el gradiente IA.
-// Superficie --surface-2, barra superior 3px con --ai-grad, badge con texto en
-// gradiente (background-clip:text) + LED pulsante (2.6s), título, plan del día y
-// chips de datos en mono. El rol llega del user real (auth), no del mock.
+// Widget Coach IA (DESIGN.md §7c) — MONOCROMO (decisión 2026-06-29, como la
+// landing): superficie elevada --surface-2, eyebrow técnico en Space Mono con un
+// LED neutro que respira (2.6s) para señalar "inteligente" sin teñir la app,
+// título, plan del día y chips de datos en mono. El rol llega del user real
+// (auth), no del mock.
 
 // Resalta los tramos **...** del cuerpo en --text (negrita semántica del plan).
 function renderBody(body: string): ReactNode {
@@ -36,12 +37,11 @@ export function CoachWidget({
       span="4x2"
       index={index}
       ariaLabel={`Coach IA, ${roleLabel}: ${data.title}`}
-      // Barra superior 3px con el gradiente IA (pseudo-elemento ::before via clase).
-      className="sp-coach !bg-surface-2"
+      className="!bg-surface-2"
     >
-      <span className="disp mb-[12px] inline-flex items-center gap-2 self-start bg-ai-grad bg-clip-text text-[11px] font-bold tracking-[0.02em] text-transparent">
-        <span className="sp-led h-[7px] w-[7px] rounded-full bg-ai-grad" aria-hidden="true" />
-        COACH IA · {roleLabel.toUpperCase()}
+      <span className="eyebrow mb-[12px] inline-flex items-center gap-2 self-start text-[11px]">
+        <span className="sp-led h-[7px] w-[7px] rounded-full bg-text-muted" aria-hidden="true" />
+        Coach IA · {roleLabel}
       </span>
 
       <h2 className="disp mb-[8px] text-[16px] font-semibold tracking-[-0.01em] text-text">

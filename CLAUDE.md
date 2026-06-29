@@ -57,13 +57,17 @@ No introduzcas llamadas a la IA que rompan estas tres reglas sin anotarlo en
 ## 5. Diseño / UI — restricción dura
 
 **Todo lo visual se rige por [DESIGN.md](DESIGN.md). Es de cumplimiento obligatorio.**
-[mockup-mono.html](mockup-mono.html) es la implementación canónica de la pestaña `Hoy`.
+El **norte visual** es la **landing** (`logos/SmartPeak Landing.html`): misma tipografía, paleta
+y estructura. [mockup-mono.html](mockup-mono.html) es la implementación canónica de `Hoy`, ya
+alineada con la landing.
 
 Resumen mínimo (el detalle está en DESIGN.md):
 
-- **El dato es el héroe**: las cifras van en **fuente mono con `tabular-nums`**; la UI usa la
-  fuente del sistema (look Apple nativo).
-- **El chrome es monocromo. El color vive SOLO en los datos** (cada métrica su color `--m-*`).
+- **Tipografía de marca**: **Space Grotesk** (UI/títulos) + **Space Mono** (datos y eyebrows
+  técnicos en mayúsculas). La del sistema es solo *fallback* (un mínimo de tono Apple).
+- **El dato es el héroe**: toda cifra va en Space Mono con `tabular-nums`.
+- **El chrome es monocromo (tinta/papel). El color vive SOLO en los datos** (cada métrica su
+  color `--m-*`). **Sin gradientes** (el coach es monocromo, como la landing).
 - **Solo tokens CSS**, cero colores literales. Nada de `shadcn` por defecto, gradientes
   decorativos, sombras pesadas ni rejillas simétricas de cards.
 - **Interfaces limpias, planas y densas**: separa con bordes sutiles (1px `--line`), no con

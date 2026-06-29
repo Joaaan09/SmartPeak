@@ -6,7 +6,8 @@
 @tailwind utilities;
 
 /* ============================================================================
-   Base — look Apple nativo. El dato es el héroe (DESIGN.md §1, §2).
+   Base — tono de la landing (Space Grotesk + tinta/papel) con un mínimo de aire
+   Apple. El dato es el héroe (DESIGN.md §1, §2).
    ============================================================================ */
 @layer base {
   body {
@@ -26,8 +27,10 @@
 
 /* ============================================================================
    Utilidades de tipografía de datos vs UI.
-   .mono  → toda cifra que sea un dato (tabular-nums, sin jitter de ancho).
-   .disp  → texto/labels de UI con la fuente del sistema.
+   .mono    → cifras (tabular-nums) Y eyebrows/labels técnicos (igual que la
+              landing: "PREPARACIÓN", "SUEÑO", "FUENTE…" van en Space Mono).
+   .disp    → títulos y texto de UI (Space Grotesk).
+   .eyebrow → atajo del label técnico canónico de la landing.
    ============================================================================ */
 @layer utilities {
   .mono {
@@ -36,6 +39,16 @@
   }
   .disp {
     font-family: var(--display);
+  }
+  /* Eyebrow/label de la landing: Space Mono, mayúsculas, tracking amplio,
+     en --text-muted. Para encabezados de sección y de widget. */
+  .eyebrow {
+    font-family: var(--num);
+    font-variant-numeric: tabular-nums lining-nums;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: var(--text-muted);
   }
 }
 
@@ -108,30 +121,20 @@ button:focus:not(:focus-visible) {
   mask: radial-gradient(farthest-side, transparent 67%, #000 68%);
 }
 
-/* Barra superior de 3px del coach con el gradiente IA (DESIGN.md §3c/§7c).
-   Único sitio de la app con gradiente. */
-.sp-coach::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--ai-grad);
-}
-
-/* LED pulsante del badge del coach (DESIGN.md §8, ≈2.6s). */
-@keyframes pulse-ai {
+/* Coach IA — MONOCROMO (decisión 2026-06-29, como la landing). Sin gradiente.
+   El LED del badge es un punto neutro que respira lentamente (≈2.6s) para
+   señalar "vivo/inteligente" sin teñir la app. Reduced-motion lo detiene. */
+@keyframes pulse-led {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.4;
   }
 }
 .sp-led {
-  animation: pulse-ai 2.6s var(--ease-in-out) infinite;
+  animation: pulse-led 2.6s var(--ease-in-out) infinite;
 }
 
 /* ============================================================================

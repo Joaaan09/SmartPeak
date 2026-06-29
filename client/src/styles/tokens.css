@@ -1,42 +1,49 @@
 /* ============================================================================
    SmartPeak — TOKENS del sistema de diseño
-   Copiados TAL CUAL del mockup canónico (mockup-mono.html) y de DESIGN.md §3.
-   Es restricción dura: los componentes consumen estas variables, nunca colores
-   literales. Tema oscuro por defecto en :root; tema claro ("Paper") en body.paper.
+   Alineados con la LANDING (logos/SmartPeak Landing.html): misma paleta
+   (tinta/papel), misma tipografía (Space Grotesk UI + Space Mono datos) y mismo
+   chrome monocromo. Es restricción dura: los componentes consumen estas
+   variables, nunca colores literales. Tema oscuro ("tinta") por defecto en
+   :root; tema claro ("papel") en body.paper.
+
+   Decisión (.progreso/decisiones.md, 2026-06-29): el chrome es monocromo como la
+   landing, pero el color SIGUE viviendo en el dato (cada métrica su --m-*). Se
+   deja anotada la opción de "monocromo total" como alternativa futura.
    ============================================================================ */
 
 :root {
-  /* Superficies neutras (sistema iOS · oscuro). Ningún color de marca domina. */
-  --bg: #000000;
-  --surface: #1c1c1e;
-  --surface-2: #2c2c2e;
-  --line: #38383a;
-  --line-strong: #48484a;
-  --text: #f5f5f7;
-  --text-muted: #98989f;
-  --text-faint: #636366;
+  /* Superficies tinta (idénticas a la landing). Ningún color de marca domina. */
+  --bg: #0e0f12;
+  --surface: #16181d;
+  --surface-2: #1c1f26;
+  --line: #262931;
+  --line-strong: #333845;
+  --text: #f4f4f1;
+  --text-muted: #9a9c9f;
+  --text-faint: #65676c;
 
-  /* "accent" = énfasis de UI MONOCROMO (botones, ticks). No es un color de marca. */
-  --accent: #f5f5f7;
-  --accent-text: #1c1c1e;
+  /* "accent" = énfasis de UI MONOCROMO (botón primario, foco, tick). En la
+     landing es el botón blanco. No es un color de marca. */
+  --accent: #f4f4f1;
+  --accent-text: #14161b;
 
-  /* Señales semánticas fijas */
+  /* Señales semánticas fijas (significan lo mismo en ambos temas) */
   --pos: #30d158;
   --neg: #ff453a;
   --warn: #ffd60a;
 
-  /* Colores POR MÉTRICA — PROVISIONALES (pendientes de definir, DESIGN.md §3b) */
-  --m-rdy: #0a84ff; /* readiness */
-  --m-hrv: #30d158; /* HRV */
-  --m-rhr: #ff375f; /* FC reposo */
-  --m-sleep: #64d2ff; /* sueño */
-  --m-steps: #ff9f0a; /* pasos */
-  --m-weight: #8e8e93; /* peso */
+  /* Colores POR MÉTRICA — DEFINIDOS (2026-06-29, DESIGN.md §3b). El color vive
+     SOLO en el dato (anillo/sparkline/barra de su métrica). Hues separados y
+     distintos de las señales --pos/--neg para no confundir métrica con delta.
+     El tema papel los redefine más profundos (legibilidad sobre blanco). */
+  --m-rdy: #0a84ff; /* Preparación/recuperación — azul (métrica héroe) */
+  --m-hrv: #2bc9b8; /* VFC — teal (≠ verde de señal --pos) */
+  --m-rhr: #ff6482; /* FC reposo — rosa (corazón; ≠ rojo de señal --neg) */
+  --m-sleep: #8278f6; /* sueño — índigo (noche; ≠ azul de readiness) */
+  --m-steps: #ff9f0a; /* pasos — naranja (actividad) */
+  --m-weight: #e5b83c; /* peso — oro */
 
-  --ring-track: #2c2c2e;
-
-  /* Gradiente "IA" (estilo Apple Intelligence) — exclusivo del panel del coach */
-  --ai-grad: linear-gradient(115deg, #ff6fd8 0%, #a78bfa 50%, #5ac8fa 100%);
+  --ring-track: #20232a;
 
   --hi: color-mix(in srgb, #ffffff 5%, transparent);
   --shadow: none;
@@ -44,32 +51,43 @@
   --r-sm: 11px;
 
   /* Curvas de motion (§8 DESIGN.md) — nunca ease-in en UI, nunca bounce */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* entradas, count-up, anillos */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* entradas, count-up, barras */
   --ease-out-ui: cubic-bezier(0.23, 1, 0.32, 1); /* hover, press, estados */
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1); /* mover / reordenar */
 
-  /* Familias tipográficas: UI = sistema (look Apple), datos = mono tabular */
-  --display: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  /* Familias tipográficas (iguales que la landing): UI = Space Grotesk con
+     fallback al sistema (mantiene un mínimo el tono Apple si la fuente falla);
+     datos/labels técnicos = Space Mono tabular. */
+  --display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    system-ui, sans-serif;
   --num: "Space Mono", ui-monospace, monospace;
-  --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --body: "Space Grotesk", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    system-ui, sans-serif;
 }
 
-/* Tema claro "Paper": solo se redefinen los tokens semánticos (DESIGN.md §3) */
+/* Tema claro "papel": solo se redefinen los tokens semánticos (igual landing) */
 body.paper {
-  --bg: #f2f2f7;
+  --bg: #efefec;
   --surface: #ffffff;
-  --surface-2: #ffffff;
-  --line: #e5e5ea;
-  --line-strong: #d1d1d6;
-  --text: #1d1d1f;
-  --text-muted: #8a8a8e;
-  --text-faint: #b0b0b5;
-  --accent: #1d1d1f;
+  --surface-2: #f6f6f3;
+  --line: #e6e6e1;
+  --line-strong: #d8d8d2;
+  --text: #14161b;
+  --text-muted: #5a5c61;
+  --text-faint: #9d9e98;
+  --accent: #14161b;
   --accent-text: #ffffff;
   --pos: #34c759;
   --neg: #ff3b30;
   --warn: #ff9f0a;
-  --ring-track: #e9e9ee;
+  /* Color por métrica — variantes más profundas para contraste sobre blanco. */
+  --m-rdy: #0a78e6; /* azul */
+  --m-hrv: #0e9484; /* teal */
+  --m-rhr: #e23e64; /* rosa */
+  --m-sleep: #5f58e0; /* índigo */
+  --m-steps: #c2700a; /* naranja/ámbar */
+  --m-weight: #9c7a1a; /* oro/bronce */
+  --ring-track: #e6e6e1;
   --hi: transparent;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 22px rgba(0, 0, 0, 0.05);
 }
