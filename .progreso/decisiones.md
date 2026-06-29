@@ -178,6 +178,33 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-29 · Despliegue con Docker + Nginx Proxy Manager (servidor propio)
+
+- **Decisión:** desplegar SmartPeak en el VPS propio (84.247.191.244, Debian 13) con **Docker
+  Compose**, detrás del **Nginx Proxy Manager** ya existente (contenedor `npm-app`), replicando
+  el patrón validado del proyecto hermano `total-grind`. Tres servicios: `frontend`
+  (nginx:alpine sirve la SPA y proxya `/api`), `backend` (Node, `node dist/index.js`) y `mongo`
+  (mongo:7 con auth y volumen `smartpeak_mongo_data`).
+- **Redes:** `frontend` en `reverse_proxy_network` (external, compartida con NPM) + `internal`;
+  `backend` y `mongo` SOLO en `internal`. El backend no se expone al proxy (el tráfico entra por
+  el nginx del frontend ⇒ menos superficie). Dominio **smartpeak.joan-coll.com** (DNS ya apunta
+  al VPS); TLS lo termina NPM (Let's Encrypt): el usuario configura el Proxy Host.
+- **Mismo origen (clave):** todo cuelga de un único host y el nginx del frontend proxya `/api`
+  al backend ⇒ `VITE_API_URL=/api` (relativa, inyectada en build time). **Obligatorio** porque
+  la cookie de refresh es `httpOnly` + `secure` + `sameSite=lax`: en dominios distintos el login
+  se rompería. `app.set('trust proxy', 1)` para IP/`req.secure` correctos tras el proxy.
+- **Imágenes:** server multi-stage (compila TS con `tsc` → runtime con `npm ci --omit=dev`),
+  client multi-stage (build Vite → nginx:alpine). Healthcheck del backend a `/api/health`.
+- **Secretos:** `.env` SOLO en el servidor (gitignored): `MONGO_USER/PASSWORD`,
+  `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_ORIGIN`. `.env.example` documenta el formato.
+- **Subida del código:** por **git** (a petición del usuario; descartado rsync): commit/push a
+  `staging` y `main`. NPM y el `docker compose up` en el VPS los gestiona el usuario.
+- **Alternativas descartadas:** MongoDB Atlas (se prefiere contenedor propio autocontenido);
+  exponer el backend directamente al proxy (innecesario); servir client y API en subdominios
+  distintos (rompe la cookie httpOnly).
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

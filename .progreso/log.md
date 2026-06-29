@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-06-29 — Dockerización y despliegue (commit + push a staging y main)
+
+- **Objetivo**: desplegar en el VPS propio (84.247.191.244, Debian 13) con Docker tras el Nginx
+  Proxy Manager existente. Se exploró por SSH el proyecto hermano `total-grind` para replicar su
+  patrón de `docker-compose` (frontend nginx + backend node + mongo; red `reverse_proxy_network`
+  external, compartida con NPM `npm-app`).
+- **Artefactos creados**: `docker-compose.yml` (3 servicios), `server/Dockerfile` (multi-stage
+  TS→dist), `client/Dockerfile` (Vite→nginx) + `client/nginx.conf` (SPA + proxy `/api`),
+  `client/.dockerignore`, `server/.dockerignore`, `.env.example`. `app.ts`: `trust proxy`.
+- **Arquitectura**: mismo origen (el frontend proxya `/api` al backend) ⇒ `VITE_API_URL=/api`;
+  resuelve la cookie httpOnly `secure`+`sameSite=lax`. Backend y mongo solo en red `internal`.
+  Dominio `smartpeak.joan-coll.com` (DNS ya resuelve al VPS). Detalle en `decisiones.md`.
+- **Verificación**: `npm run build` (server `tsc` + client `vite build`) en verde antes de
+  commitear; typecheck del server tras el cambio en `app.ts` también verde.
+- **Git** (a petición del usuario, por git en vez de rsync): 2 commits en `staging` — uno con el
+  trabajo de diseño/UI pendiente, otro con la dockerización — y merge `staging` → `main`.
+  **Push pendiente**: el repo no tenía remoto (`origin`); a la espera de la URL del usuario.
+- **A cargo del usuario**: Proxy Host en NPM (TLS Let's Encrypt) y, en el VPS, crear `.env` con
+  los secretos + `docker compose up -d --build`.
+
 ## 2026-06-29 — Realineado del sistema de diseño con la LANDING
 
 - **Petición del usuario**: que la app siga el estilo de la landing (`logos/SmartPeak Landing.html`)

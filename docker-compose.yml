@@ -1,0 +1,64 @@
+services:
+  # Frontend — React/Vite servido por Nginx (sirve la SPA y proxya /api al backend)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # URL relativa: mismo origen, el nginx interno proxya /api al backend.
+        - VITE_API_URL=${VITE_API_URL:-/api}
+    container_name: smartpeak-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    networks:
+      - reverse_proxy_network
+      - internal
+
+  # Backend — Node/Express + Mongoose (API bajo /api)
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: smartpeak-backend
+    restart: unless-stopped
+    expose:
+      - "4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/smartpeak?authSource=admin
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - CLIENT_ORIGIN=${CLIENT_ORIGIN}
+    depends_on:
+      - mongo
+    networks:
+      - internal
+
+  # Base de datos — MongoDB con autenticación y volumen persistente
+  mongo:
+    image: mongo:7
+    container_name: smartpeak-mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=smartpeak
+    volumes:
+      - smartpeak_mongo_data:/data/db
+    networks:
+      - internal
+
+networks:
+  # Red compartida con Nginx Proxy Manager (ya existe en el servidor)
+  reverse_proxy_network:
+    external: true
+  # Red privada interna del proyecto (frontend <-> backend <-> mongo)
+  internal:
+    driver: bridge
+
+volumes:
+  smartpeak_mongo_data:

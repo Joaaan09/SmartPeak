@@ -10,6 +10,10 @@ import apiRoutes from './routes/index.js';
 export function createApp() {
   const app = express();
 
+  // Detrás de Nginx Proxy Manager: confiar en el primer proxy
+  // (IP real del cliente en logs y req.secure correcto tras la terminación TLS).
+  app.set('trust proxy', 1);
+
   // Cabeceras de seguridad
   app.use(helmet());
 

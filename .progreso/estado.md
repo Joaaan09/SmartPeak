@@ -48,9 +48,15 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
-- **Realineado de diseño con la landing (2026-06-29): implementado**, en `staging` y **sin
-  commitear**. Pendiente: OK visual del usuario + commit. El `revisor` corrió sobre el cambio
-  (typecheck/lint/build verdes antes de empezar; ver su resultado en el log al cerrar).
+- **Realineado de diseño con la landing (2026-06-29): COMMITEADO** en `staging`
+  (commit `refactor(ui): refina sistema de diseño, marca y pestaña Hoy`).
+- **Despliegue dockerizado (2026-06-29):** añadidos `docker-compose.yml`, `server/Dockerfile`,
+  `client/Dockerfile` + `client/nginx.conf`, `.dockerignore` (×2) y `.env.example`; `trust proxy`
+  en `app.ts`. `build` completo (server+client) en verde. Patrón: 3 servicios (frontend/backend/
+  mongo) tras el Nginx Proxy Manager del VPS, **mismo origen**, dominio `smartpeak.joan-coll.com`
+  (DNS ya apunta al VPS). Ver `decisiones.md` (2026-06-29 · Despliegue). **Pendiente:** configurar
+  el remoto git para el push y, en el VPS, crear `.env` + `docker compose up -d --build` + Proxy
+  Host en NPM (lo hace el usuario).
 
 ## Siguiente paso (elegir)
 
@@ -75,6 +81,7 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 - Desarrollo en `staging` (o ramas de feature → `staging`). `main` solo para validado.
 - **`staging`** tiene auth + (shell + Hoy vista) mergeados. **`main` sigue en el baseline**
   (a la espera de validación e2e).
-- **Realineado de diseño 2026-06-29: cambios sin commitear sobre `staging`** (no se commitea sin
-  pedirlo el usuario). Carpeta `logos/` (assets + landing) sigue *untracked*.
+- **2026-06-29: realineado de diseño + dockerización commiteados en `staging`** (2 commits) y
+  **mergeados a `main`** a petición del usuario. `logos/` ya trackeado. **Falta configurar el
+  remoto** (no hay `origin`) para completar el push de ambas ramas.
 - Próxima feature: nueva rama desde `staging` (p. ej. `feat/hoy-edit`).
