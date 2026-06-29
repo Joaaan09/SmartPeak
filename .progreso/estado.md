@@ -50,13 +50,16 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 - **Realineado de diseño con la landing (2026-06-29): COMMITEADO** en `staging`
   (commit `refactor(ui): refina sistema de diseño, marca y pestaña Hoy`).
-- **Despliegue dockerizado (2026-06-29):** añadidos `docker-compose.yml`, `server/Dockerfile`,
-  `client/Dockerfile` + `client/nginx.conf`, `.dockerignore` (×2) y `.env.example`; `trust proxy`
-  en `app.ts`. `build` completo (server+client) en verde. Patrón: 3 servicios (frontend/backend/
-  mongo) tras el Nginx Proxy Manager del VPS, **mismo origen**, dominio `smartpeak.joan-coll.com`
-  (DNS ya apunta al VPS). Ver `decisiones.md` (2026-06-29 · Despliegue). **Pendiente:** configurar
-  el remoto git para el push y, en el VPS, crear `.env` + `docker compose up -d --build` + Proxy
-  Host en NPM (lo hace el usuario).
+- **✅ DESPLEGADO Y FUNCIONANDO en producción (2026-06-29):** `https://smartpeak.joan-coll.com`
+  sirve la SPA y `/api/health` responde 200 tras NPM + TLS (Let's Encrypt). Stack dockerizado:
+  3 servicios (frontend nginx / backend node / mongo) tras el Nginx Proxy Manager del VPS, **mismo
+  origen**. Corridos en `~/servers/smartpeak` (clonado de `github.com/Joaaan09/SmartPeak`, rama
+  `main`), `.env` con secretos en el VPS (chmod 600). Durante el despliegue se arreglaron 2 bugs
+  (orden de arranque Mongo → healthcheck; colisión del nombre `backend` en la red del proxy →
+  `smartpeak-backend`). Detalle en `log.md` y `decisiones.md` (2026-06-29 · Despliegue).
+- **Pendiente menor:** el usuario debe pushear el commit `fix(deploy)` (commits ya a su nombre,
+  Joaaan09); luego `git reset --hard origin/main` en el VPS para sincronizar (ahora tiene el fix
+  aplicado a mano). Operación de redespliegue: `git pull && docker compose up -d --build`.
 
 ## Siguiente paso (elegir)
 

@@ -18,11 +18,25 @@
   Dominio `smartpeak.joan-coll.com` (DNS ya resuelve al VPS). Detalle en `decisiones.md`.
 - **Verificación**: `npm run build` (server `tsc` + client `vite build`) en verde antes de
   commitear; typecheck del server tras el cambio en `app.ts` también verde.
-- **Git** (a petición del usuario, por git en vez de rsync): 2 commits en `staging` — uno con el
-  trabajo de diseño/UI pendiente, otro con la dockerización — y merge `staging` → `main`.
-  **Push pendiente**: el repo no tenía remoto (`origin`); a la espera de la URL del usuario.
-- **A cargo del usuario**: Proxy Host en NPM (TLS Let's Encrypt) y, en el VPS, crear `.env` con
-  los secretos + `docker compose up -d --build`.
+- **Git** (a petición del usuario, por git en vez de rsync): commits en `staging` + merge a
+  `main`. El repo no tenía `origin`; resultó ser `github.com/Joaaan09/SmartPeak` (cuenta personal
+  del usuario). El Mac tenía guardadas credenciales de **FlowProp** (sin permiso) → se corrigió
+  la **autoría** de los commits a `Joan Coll <…+Joaaan09@users.noreply.github.com>` y el usuario
+  hizo el push. Ver memoria `git-identity`.
+- **Despliegue en el VPS (hecho por el orquestador vía SSH)**: clonado en `~/servers/smartpeak`,
+  `.env` generado con `openssl` (chmod 600), `docker compose up -d --build`. El usuario configuró
+  el **Proxy Host en NPM** (TLS Let's Encrypt OK).
+- **2 bugs encontrados y resueltos en producción**:
+  1. *Backend no conectaba a Mongo al arrancar* (`ECONNREFUSED`): el backend arrancaba antes que
+     Mongo. **Fix**: healthcheck en `mongo` + `depends_on: condition: service_healthy`.
+  2. *502 en `/api`*: el `proxy_pass` de nginx usaba `backend`, nombre que **colisiona** con los
+     `backend` de otros proyectos en la red compartida `reverse_proxy_network` (el DNS de Docker
+     resolvía al contenedor equivocado). **Fix**: apuntar a `smartpeak-backend` (nombre único) con
+     resolver dinámico. Commit `fix(deploy)`.
+- **✅ RESULTADO**: `https://smartpeak.joan-coll.com` sirve la SPA (200) y `/api/health` responde
+  `{"ok":true}` (200) tras NPM + TLS. App **desplegada y operativa**. Pendiente menor: el VPS tiene
+  los 2 archivos del fix aplicados a mano; se sincronizará con `git reset --hard origin/main` tras
+  el push.
 
 ## 2026-06-29 — Realineado del sistema de diseño con la LANDING
 
