@@ -4,6 +4,29 @@
 
 ---
 
+### 2026-06-30 · Scroll en `<main>` (app-shell), no en el documento — móvil incluido
+
+- **Decisión:** el shell autenticado (`AppLayout`) ocupa exactamente el viewport
+  (`h-[100dvh]` + `overflow-hidden`) y el scroll vive **en `<main>`** (`overflow-y-auto`),
+  tanto en desktop como en **móvil** (antes el móvil scrolleaba el documento/body). Se añade
+  `overscroll-behavior-y: contain` al `<main>`. La `TabBar` sigue `position: fixed` + blur,
+  sin cambios.
+- **Motivo:** en la **PWA standalone de iOS** la TabBar se desanclaba y "flotaba" a media
+  altura al hacer scroll. Es un bug conocido de WebKit con `position: fixed` + `backdrop-filter`
+  **cuando el que scrollea es el body**. Con el body estático (overflow-hidden) y el scroll
+  movido a un contenedor interno, WebKit recompone bien la capa fija y **se conserva el blur**
+  (la barra sigue translúcida sobre el contenido que pasa por debajo). Seguro porque ninguna
+  página hace `window.scrollTo`/scroll-restoration ni usa `position: sticky`.
+- **Alternativas descartadas:** (a) **quitar `backdrop-filter`** y dejar la barra opaca —
+  arregla el bug pero sacrifica el efecto de blur de la landing/DESIGN; (b) **hacks de
+  compositing** en la propia TabBar (`translateZ(0)`/`will-change`) — anularían el
+  `backdrop-filter` en WebKit; (c) **convertir la TabBar en parte del flujo** (no `fixed`) —
+  el contenido dejaría de pasar por detrás, perdiendo el blur sobre el contenido.
+- **Nota DESIGN.md §11:** `100dvh` es estable en standalone (no hay toolbar dinámica); en
+  Safari normal el contenedor se ajusta sin rebote del body.
+
+---
+
 ### 2026-06-27 · Harness del proyecto basado en CLAUDE.md + .progreso/
 
 - **Decisión:** estructurar el proyecto con `CLAUDE.md` (≤200 líneas) como instrucciones,

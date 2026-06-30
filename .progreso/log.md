@@ -4,6 +4,10 @@
 
 ---
 
+2026-06-30 — Fix: la TabBar móvil "flotaba" a media altura al hacer scroll en la PWA standalone de iOS. Causa: bug de WebKit con `position: fixed` + `backdrop-filter` cuando el scroll lo hace el documento/body. Arreglo (AppLayout): patrón app-shell — el shell ocupa el viewport (`h-[100dvh]` + `overflow-hidden`) y el scroll pasa al `<main>` (`overflow-y-auto` + `overscroll-behavior-y:contain`) también en móvil (antes solo en desktop). Con el body estático, iOS recompone bien la barra fija y se conserva el blur. Sin tocar TabBar. Verificado por la ausencia de scroll-to-top/sticky (nada que romper). typecheck · lint · build en verde. Falta validación en el iPhone del usuario.
+
+---
+
 2026-06-30 — Scores biométricos deterministas: motor puro (sueño/readiness/esfuerzo/energía/estrés) + baseline + 28 tests; integrados al vuelo en GET /metrics/latest; UI de Hoy cableada (Readiness real, sueño=calidad%, energía/esfuerzo, estrés "próximamente"); DESIGN.md §14 + 2 tokens. Revisado (motor/integración/UI) y validado por el usuario. Decidido: estrés vía HRV manual; ingesta por captura+IA (3 vías) → nuevo dispositivo.md.
 
 ---

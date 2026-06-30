@@ -48,6 +48,12 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **FIX TabBar móvil que "flotaba" a media altura al scrollear en la PWA standalone de iOS
+  (2026-06-30).** Causa: bug de WebKit `position: fixed` + `backdrop-filter` con **scroll del
+  body**. Arreglo en `AppLayout`: patrón **app-shell** (shell = `h-[100dvh]` + `overflow-hidden`;
+  scroll movido a `<main>` con `overflow-y-auto` + `overscroll-behavior-y:contain`) también en
+  móvil, no solo desktop. **TabBar sin tocar** → se conserva el blur. typecheck · lint · build en
+  verde. Ver `decisiones.md`/`log.md`. **Falta:** que el usuario lo confirme en su iPhone.
 - **SCORES BIOMÉTRICOS DETERMINISTAS — HECHOS, revisados (3 pasos APROBADOS) y ✅ VALIDADOS
   VISUALMENTE POR EL USUARIO (2026-06-30).** Motor de cálculo **puro** en
   `server/src/services/scores/` (5 scores: **Calidad de sueño · Preparación/Readiness ·
