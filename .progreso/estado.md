@@ -48,6 +48,16 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **Ingesta HORARIA (intradía) de FC, pasos y energía — HECHA, revisada (APROBADA), PENDIENTE DE
+  DESPLEGAR (2026-06-30).** El normalizador (`syncBiometrics.ts`) deja de colapsar a 1 punto/día:
+  cuando HAE exporta con *Time Grouping = Hour* guarda **series por hora** (`heartRate.samples`,
+  `steps.hourly`, `activeEnergy.hourly`, `t="HH:00"` local) **además** del agregado diario derivado
+  (pasos=suma · energía=suma kcal · FC=min/max/avg). Sueño sigue 1/día. Upsert idempotente (`$set`
+  del objeto completo, no `$push`) y **retrocompatible** con el formato diario legacy. Total diario =
+  suma de tramos redondeados (cuadra con la serie). 9/9 tests + 7 de borde del revisor; **APTO para
+  desplegar**. **Falta:** (a) desplegar (merge `staging`→`main` + `docker compose up --build`);
+  (b) **reenviar el JSON horario de la semana** al endpoint para poblar el histórico (pendiente el
+  archivo completo del usuario). Detalle en `log.md`/`decisiones.md` (2026-06-30).
 - **Pestaña «Hoy» CONECTADA A BIOMETRÍA REAL + botón «Sincronizar» funcional (2026-06-30),
   revisada (APROBADA).** Nuevo `GET /api/metrics/latest` (autenticado) que devuelve el
   `DailyMetrics` más reciente (200 con `{dailyMetrics:null}` si no hay datos, no 404). El front

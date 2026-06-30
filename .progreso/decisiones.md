@@ -295,6 +295,40 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-30 · Ingesta horaria (intradía): series por hora + agregados derivados
+
+- **Decisión:** el normalizador del sync (`syncBiometrics.ts`) pasa de "1 punto por día (el
+  último gana)" a **acumular por (día, hora)**. Cuando HAE exporta con *Time Grouping = Hour*,
+  se guardan **series por hora** además del agregado diario:
+  - `metrics.heartRate.samples: [{ t, min, avg, max }]`
+  - `metrics.steps.hourly: [{ t, qty }]`
+  - `metrics.activeEnergy.hourly: [{ t, kcal }]`
+  - `t` = **hora local** `"HH:00"` (de `date.slice(11,13)`, sin convertir a UTC). Series
+    ordenadas asc. por `t`, sub-schemas `{_id:false}`, `default:undefined` (sin `[]` espurios).
+  - **Agregado diario derivado** (para `Hoy`/Readiness, sin recalcular la serie): pasos=suma,
+    energía=suma kcal, FC=`{min:mín de mins, max:máx de maxs, avg:media de avgs}`. Sueño sigue
+    **1/día** (es nocturno, no horario).
+- **Motivo:** el usuario quiere desglose horario para **gráficas** (Tendencias) y para derivar
+  la **FC en reposo nocturna real** (mín durante el sueño), no la media diaria. HAE ya entrega la
+  hora en `date`; antes la tirábamos.
+- **Matiz de redondeo (avalado):** el **total diario = suma de los tramos YA redondeados**, no el
+  redondeo de la suma cruda. Así la suma de la serie visible **cuadra** con el total mostrado, sin
+  descuadres de ±1 en las gráficas. **Excepción** (hallazgo del revisor): si un punto llega **sin
+  hora válida**, cuenta en el total pero **no** en la serie → la UI de Tendencias/Hoy **no debe
+  asumir** `Σserie == total` en ese caso. Con el export horario de HAE no ocurre (todos traen hora).
+- **Idempotencia:** upsert por `{userId,date}` con `$set` del **objeto completo** de cada métrica
+  presente (reemplaza la serie, **no** `$push`) → reenviar "hoy" varias veces **actualiza** sin
+  duplicar. **Retrocompatible** con el formato diario legacy (Atajo "Export Health Data").
+- **Verificación:** 9/9 tests (`mongodb-memory-server`, runner nativo de Node `node --import tsx
+  --test`) + 7 tests de borde del revisor. **Revisor: APROBADO, apto para desplegar.**
+- **Alternativas descartadas:** guardar solo el agregado diario (pierde la serie para gráficas);
+  escribir el histórico directo en Mongo (se hará **reenviando el JSON al endpoint**, que valida y
+  normaliza igual que el Atajo).
+- **Menores pendientes (no bloquean):** test de energía semi-tautológico (añadir valor a mano);
+  normalizar el `source` compuesto (`"KSIX Ring|iPhone…"`) si en el futuro se muestra la fuente.
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

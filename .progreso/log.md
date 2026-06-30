@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-06-30 — Ingesta horaria (intradía) de FC, pasos y energía
+
+- **Disparador:** el usuario quiere desglose **por horas** de pasos y FC (media horaria) para
+  poder hacer gráficos. Inspección del export real de HAE: con *Time Grouping = Hour* cada
+  métrica trae ~24 puntos/día con la hora en `date` (`"2026-06-24 15:00:00 +0200"`); el sueño
+  sigue 1/día. Verificación cruzada: la suma horaria de pasos del 24/06 da **18.622**, idéntico al
+  total diario que ya teníamos.
+- **Backend (ejecutor):** reescrito `services/syncBiometrics.ts` (acumular por día/hora → agregar
+  y persistir; helpers `dayOf`/`hourOf`). Modelo `models/DailyMetrics.ts` ampliado con series
+  `heartRate.samples` / `steps.hourly` / `activeEnergy.hourly` (`{_id:false}`, `default:undefined`).
+  Upsert idempotente (`$set` del objeto completo, no `$push`), retrocompatible con el formato
+  diario. Nueva suite `syncBiometrics.test.ts` (9 tests, `mongodb-memory-server`) + fixtures;
+  scripts `test`/`typecheck:test` en `package.json`, `tsconfig.test.json`.
+- **Decisión de redondeo:** total diario = **suma de tramos ya redondeados** (cuadra con la serie
+  visible). Detalle y matiz del invariante (puntos sin hora) en `decisiones.md` (2026-06-30).
+- **Revisor: APROBADO, apto para desplegar.** typecheck verde · `test` 9/9 · `build` limpio
+  (`dist/` sin tests/fixtures) · 7 tests de borde propios en verde · test de la suma no tautológico.
+  3 hallazgos 🔵 menores (no bloquean): test de energía semi-tautológico, invariante Σserie==total
+  no universal (documentado), `source` compuesto sin normalizar.
+- **Siguiente:** desplegar (merge `staging`→`main` + rebuild) y **reenviar el JSON horario de la
+  semana** al endpoint para poblar el histórico (pendiente el archivo completo del usuario; el que
+  pasó se cortó a mitad del `heart_rate`).
+
 ## 2026-06-30 — Pestaña «Hoy» conectada a biometría real + botón Sincronizar funcional
 
 - **Backend:** nuevo `GET /api/metrics/latest` (autenticado, `requireAuth`) que devuelve el

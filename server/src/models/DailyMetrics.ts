@@ -20,12 +20,44 @@ const sleepSchema = new Schema(
   { _id: false },
 );
 
+// Series intradía (una muestra por hora). `t` es la hora local "HH:00".
+// `{ _id: false }`: cada hora es un objeto embebido, no un subdocumento con
+// identidad propia (evita un ObjectId por cada hora).
+const heartRateSampleSchema = new Schema(
+  {
+    t: { type: String, required: true }, // "HH:00"
+    min: { type: Number },
+    avg: { type: Number },
+    max: { type: Number },
+  },
+  { _id: false },
+);
+
+const stepsHourSchema = new Schema(
+  {
+    t: { type: String, required: true }, // "HH:00"
+    qty: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const activeEnergyHourSchema = new Schema(
+  {
+    t: { type: String, required: true }, // "HH:00"
+    kcal: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
 const heartRateSchema = new Schema(
   {
     min: { type: Number },
     max: { type: Number },
     avg: { type: Number },
     source: { type: String },
+    // `default: undefined` evita que Mongoose materialice un `[]` cuando no hay
+    // serie (formato diario antiguo): la serie queda AUSENTE, no vacía.
+    samples: { type: [heartRateSampleSchema], default: undefined },
   },
   { _id: false },
 );
@@ -34,6 +66,7 @@ const stepsSchema = new Schema(
   {
     qty: { type: Number },
     source: { type: String },
+    hourly: { type: [stepsHourSchema], default: undefined }, // serie horaria (opcional)
   },
   { _id: false },
 );
@@ -42,6 +75,7 @@ const activeEnergySchema = new Schema(
   {
     kcal: { type: Number }, // normalizado a kcal en el servicio
     source: { type: String },
+    hourly: { type: [activeEnergyHourSchema], default: undefined }, // serie horaria (opcional)
   },
   { _id: false },
 );
