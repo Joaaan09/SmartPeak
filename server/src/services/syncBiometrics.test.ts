@@ -187,6 +187,115 @@ test('retrocompat: payload diario antiguo (sin hora) -> agregado correcto, serie
   assert.equal(m.heartRate.samples, undefined, 'heartRate.samples ausente');
 });
 
+test('peso: el sync persiste metrics.weight.kg en el día correcto (última lectura)', async () => {
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+
+  const doc = await getDay('2026-06-24');
+  const weight = doc!.metrics.weight;
+  // El fixture trae 2 lecturas del día (07:00 -> 83.6, 19:00 -> 83.9): gana la última.
+  assert.equal(weight.kg, 83.9, 'se queda con la lectura más reciente del día');
+  // source = string crudo de HAE (origen sync), distinto del literal 'manual'.
+  assert.equal(weight.source, 'Salud', 'source crudo de HAE');
+  assert.notEqual(weight.source, 'manual');
+});
+
+test('peso: idempotencia — reenviar el mismo payload no cambia el resultado', async () => {
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+
+  // Un solo documento del día (no se duplica).
+  const count = await DailyMetrics.countDocuments({ userId, date: '2026-06-24' });
+  assert.equal(count, 1, 'sigue habiendo un único documento del día');
+
+  const doc = await getDay('2026-06-24');
+  assert.equal(doc!.metrics.weight.kg, 83.9, 'mismo peso tras reenviar');
+  assert.equal(doc!.metrics.weight.source, 'Salud', 'mismo source tras reenviar');
+});
+
+test('peso: el sync NO pisa un peso manual preexistente', async () => {
+  // Sembramos un día con SOLO un peso manual (sin otras métricas).
+  await DailyMetrics.create({
+    userId,
+    date: '2026-06-24',
+    metrics: { weight: { kg: 80.0, source: 'manual' } },
+  });
+
+  // El payload trae un peso de sync (83.9) para ese mismo día.
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+
+  const doc = await getDay('2026-06-24');
+  // El peso manual se respeta; el sync NO lo sobrescribe.
+  assert.equal(doc!.metrics.weight.kg, 80.0, 'sigue el peso manual');
+  assert.equal(doc!.metrics.weight.source, 'manual', 'source sigue siendo manual');
+  // ...pero el resto de métricas del sync sí se escribieron en el mismo doc.
+  assert.equal(doc!.metrics.steps.qty, 18622, 'las demás métricas sí entran');
+  // Un único documento del día (no se duplicó al intentar el peso).
+  const count = await DailyMetrics.countDocuments({ userId, date: '2026-06-24' });
+  assert.equal(count, 1, 'un único documento del día');
+});
+
+test('peso: día existente SIN peso — el sync le AÑADE el peso (filtro casa con campo ausente)', async () => {
+  // Día con métricas pero SIN metrics.weight. El update 1 (filtro source $ne 'manual')
+  // debe casar igualmente cuando el campo está ausente, sin caer al upsert del paso 2.
+  await DailyMetrics.create({
+    userId,
+    date: '2026-06-24',
+    metrics: { sleep: { total: 6.5, source: 'KSIX Ring' } },
+    readiness: { score: 70 },
+  });
+
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+
+  const doc = await getDay('2026-06-24');
+  assert.equal(doc!.metrics.weight.kg, 83.9, 'el peso se añadió al doc existente');
+  assert.equal(doc!.metrics.weight.source, 'Salud', 'source de sync');
+  // No se duplicó el doc.
+  const count = await DailyMetrics.countDocuments({ userId, date: '2026-06-24' });
+  assert.equal(count, 1, 'un único documento del día');
+});
+
+test('peso: día solo-peso (sin otras métricas) — se inserta el doc vía $setOnInsert', async () => {
+  // Payload que SOLO trae weight_body_mass para un día inexistente en la BD.
+  // El update 1 no casa (no hay doc) y el upsert del paso 2 crea el doc con
+  // userId/date (satisface los `required` del schema) y metrics.weight.
+  const soloPeso: SyncPayload = {
+    data: {
+      metrics: [
+        {
+          name: 'weight_body_mass',
+          units: 'kg',
+          data: [{ date: '2026-06-28 08:00:00 +0200', qty: 84.4, source: 'Salud' }],
+        },
+      ],
+    },
+  };
+  const res = await ingestHealthPayload(userId, soloPeso);
+  assert.deepEqual(res.metricsByDay['2026-06-28'], ['weight'], 'solo se reporta weight');
+
+  const doc = await getDay('2026-06-28');
+  assert.ok(doc, 'el doc se creó vía upsert');
+  assert.equal(String(doc!.userId), userId, 'userId persistido por $setOnInsert');
+  assert.equal(doc!.date, '2026-06-28', 'date persistido por $setOnInsert');
+  assert.equal(doc!.metrics.weight.kg, 84.4, 'peso correcto');
+  assert.equal(doc!.metrics.weight.source, 'Salud', 'source de sync');
+  const count = await DailyMetrics.countDocuments({ userId, date: '2026-06-28' });
+  assert.equal(count, 1, 'un único documento del día');
+});
+
+test('peso: el sync SÍ actualiza un peso previo de origen sync', async () => {
+  // Día con peso de sync previo (source crudo, no 'manual').
+  await DailyMetrics.create({
+    userId,
+    date: '2026-06-24',
+    metrics: { weight: { kg: 99.9, source: 'Salud' } },
+  });
+
+  await ingestHealthPayload(userId, hourlyPayloadDay2406());
+
+  const doc = await getDay('2026-06-24');
+  assert.equal(doc!.metrics.weight.kg, 83.9, 'el peso de sync previo sí se actualiza');
+});
+
 test('re-sync: no pisa campos manuales (hrv/spo2/weight) ni readiness', async () => {
   // Sembramos un doc con métricas manuales y readiness ya presentes.
   await DailyMetrics.create({

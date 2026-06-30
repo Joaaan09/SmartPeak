@@ -2,7 +2,9 @@ import mongoose, { Schema, type InferSchemaType, type HydratedDocument } from 'm
 
 // Documento diario por usuario: un único registro por (userId, date).
 // Las métricas del sync (sleep/heartRate/steps/activeEnergy) llegan del Atajo de iOS;
-// las manuales (hrv/spo2/weight) y la readiness se rellenarán en pasos posteriores.
+// el peso (weight) entra TAMBIÉN por sync (weight_body_mass), pero con precedencia
+// "manual gana": un peso de origen manual no lo pisa el sync (ver syncBiometrics).
+// Las manuales restantes (hrv/spo2) y la readiness se rellenarán en pasos posteriores.
 // Cada sub-esquema lleva `{ _id: false }`: son objetos embebidos, no subdocumentos
 // con identidad propia.
 
@@ -80,7 +82,8 @@ const activeEnergySchema = new Schema(
   { _id: false },
 );
 
-// Métricas manuales (se poblarán en otro paso). Se declaran ya para fijar el shape.
+// hrv/spo2: métricas manuales (se poblarán en otro paso). Se declaran ya para fijar
+// el shape. weight (más abajo) NO es solo-manual: entra por sync y por entrada manual.
 const hrvSchema = new Schema(
   {
     value: { type: Number },
@@ -97,6 +100,9 @@ const spo2Schema = new Schema(
   { _id: false },
 );
 
+// Peso corporal. `source`: string crudo de HAE si vino del sync (p. ej. "Salud"),
+// o el literal 'manual' si lo introdujo el usuario a mano. El sync respeta el
+// peso manual (no lo sobrescribe).
 const weightSchema = new Schema(
   {
     kg: { type: Number },

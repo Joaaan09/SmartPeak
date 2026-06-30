@@ -4,6 +4,36 @@
 
 ---
 
+### 2026-06-30 · Ubicación de la entrada manual de biometría: teclado por dato, foto por día
+
+- **Decisión:** las vías de entrada manual (ver `dispositivo.md` §4) se ubican según la
+  **granularidad del dato**, no todas en el mismo sitio:
+  - **Teclado (un valor)** → en la **página de detalle de cada métrica** (`/metrica/:metricKey`):
+    añadir/editar ese dato, incluido corregir días del histórico. Es el **hogar** del dato.
+  - **Foto / captura (multi-métrica = volcado del día)** → **un único flujo central
+    «Importar desde captura»**, lanzado como **acción desde `Hoy`** (hoja «Añadir datos de hoy»);
+    la IA extrae y **reparte cada valor a su métrica**.
+  - **Atajo de iOS** → sin UI (POST directo, menor fricción, día a día).
+  - **Revisión** de lo leído con baja confianza → **aviso ligero en `Hoy`** («N datos sin
+    revisar →»), no pantalla propia.
+- **Motivo:** teclado y foto tienen **granularidad distinta** (un dato vs. el volcado del día),
+  así que no van juntos: poner «Importar foto» dentro de la página de HRV sugiere que la captura
+  es solo de HRV, cuando una pantalla del anillo trae varias métricas a la vez (sueño +
+  FC-sueño + HRV + SpO₂…). La barra de navegación es para **destinos**, no acciones esporádicas.
+- **Alternativas descartadas:**
+  (a) **UI en Perfil** (lo que apuntaba `estado.md`) — Perfil es **configuración** (rol, tema,
+      token de sync, PWA); un dato que se teclea a diario ahí es fricción y sitio poco natural.
+      Refuerzo: el **peso** vive en dos campos (`User.weight` estático vs. `metrics.weight.kg`
+      diario) → el día a día va a `metrics`, no al perfil.
+  (b) **Pestaña dedicada** en la nav solo para subir capturas — desbalancea la barra (5 ítems
+      apretados en móvil) y da peso de primer nivel a una acción esporádica (el día a día ya es
+      el Atajo de iOS).
+  (c) **«Importar foto» por métrica** filtrando solo ese dato — desperdicia el resto de la
+      captura (multi-métrica) u obliga a subir la misma foto en varias páginas. Si acaso, un
+      atajo que abra el **mismo flujo central**, pero no de inicio (KISS).
+
+---
+
 ### 2026-06-30 · Scroll en `<main>` (app-shell), no en el documento — móvil incluido
 
 - **Decisión:** el shell autenticado (`AppLayout`) ocupa exactamente el viewport
@@ -537,6 +567,50 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 - **Pendiente doc:** CLAUDE.md §5 ya actualizado (3 skills); revisar si limpiar las menciones a
   `impeccable` en DESIGN.md §0/§8/§11 (hoy son atribuciones conceptuales válidas → de momento se
   conservan).
+
+---
+
+### 2026-06-30 · El peso entra por SYNC (Apple Health) además de manual; precedencia «manual gana»
+
+- **Contexto / bug:** el usuario reportó que el peso no llegaba a la app pese a estar en Apple
+  Health. Diagnóstico: el Atajo **sí exporta** `weight_body_mass` (confirmado con payload real de
+  producción: `units: "kg"`, `source: "Salud"`, ~1 lectura los días que se pesa), pero el
+  normalizador del sync (`syncBiometrics.ts`) lo **descartaba en el `default`** del `switch` (solo
+  contemplaba 4 métricas: `step_count`/`active_energy`/`heart_rate`/`sleep_analysis`).
+- **Clasificación previa errónea (corregida):** el peso se había metido en el saco «entrada
+  manual» junto a HRV/SpO2 (ver inventario del anillo, `dispositivo.md`). Pero **no es el mismo
+  caso**: HRV/SpO2 el anillo KSIX **no los vuelca a Salud** (por eso van por captura+IA); el peso
+  **sí está en Apple Health** (báscula/entrada manual del iPhone, `source:"Salud"`) → es
+  perfectamente **sincronizable**. Un anillo no pesa: el peso nunca dependió del anillo.
+- **Decisión (del usuario):** el peso entra por **dos vías que coexisten**: ① **sync** (Apple
+  Health vía Atajo) y ② **entrada manual** desde la app (futura, otra tanda).
+- **Precedencia «manual gana»:** el sync **NO pisa** un `metrics.weight` cuyo `source` sea
+  `'manual'`. Convención de `source`: el **sync** guarda el string crudo de HAE (`"Salud"`,
+  `"KSIX Ring"`); la entrada **manual** escribirá el literal **`'manual'`** como discriminador.
+  Motivo: si el usuario se molesta en teclear/corregir su peso, el Atajo no debe machacarlo.
+- **Implementación (esta tanda, SOLO backend):** nuevo `case 'weight_body_mass'` — escalar **por
+  día** (no horario ni aditivo, a diferencia de pasos/energía), **kg sin conversión** (≠ energía
+  kJ→kcal), «última lectura del día gana». Persistencia **fuera** del `$set` masivo, con **doble
+  `updateOne`**: (1) update condicional `{'metrics.weight.source': {$ne:'manual'}}` sin upsert; (2)
+  si `matchedCount===0`, upsert con `$setOnInsert` que **solo inserta si el día no existe** (evita
+  insertar un duplicado que chocaría con el índice único `userId+date` cuando hay peso manual).
+  Idempotente y retrocompatible con el formato diario legacy.
+- **Verificación:** ejecutor 41/41 tests + revisor APROBADO con **11 tests adversariales propios**
+  (los 4 escenarios de precedencia, idempotencia N=3, día solo-peso, peso+otras métricas, legacy
+  sin hora). typecheck limpio. **APTO para staging.**
+- **Limitación conocida (hallazgo revisor, severidad baja):** el desempate «última lectura del
+  día» usa **comparación lexicográfica del string de fecha crudo**; si dos pesos del mismo día
+  calendario llegaran con **offsets de TZ distintos**, el orden podría no ser el temporal real. No
+  aplica al uso esperado (lecturas del mismo dispositivo/usuario comparten TZ). Fix si algún día
+  importa: comparar `Date.parse(raw)` (epoch) en vez del string.
+- **Menor abierto (no bloqueante):** `metricsByDay` reporta `weight` en el resumen del response
+  aunque ese día **no se escribiera** por haber peso manual (no-op). Impacto nulo hoy (el resumen
+  no es crítico); anotado por si se afina.
+- **Pendiente:** vía ② (endpoint + UI de **entrada manual de peso** en la app) — la lógica de
+  precedencia ya queda montada; basta con que escriba `source:'manual'`. Mostrar el peso en `Hoy`
+  (hoy la card de Peso está «Próximamente») va con esa tanda.
+- **Alternativas descartadas:** mantener el peso como **solo-manual** (contradice que ya está en
+  Salud y añade fricción inútil); que el sync **pise siempre** (rompería un valor manual corregido).
 
 ---
 

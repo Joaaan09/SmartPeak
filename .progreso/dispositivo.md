@@ -70,6 +70,23 @@ Para los datos que **no** salen a Apple Health (HRV, SpO₂, temperatura, FC-sue
      **"revisar"** y se valida de un toque la próxima vez que abras la app → fricción mínima sin
      guardar basura a ciegas.
 
+### Ubicación en la UI (decidido 2026-06-30 · ver `decisiones.md`)
+
+Las 3 vías se colocan por **granularidad del dato**, no todas en el mismo sitio:
+
+- **Teclado (un valor)** → **página de detalle de cada métrica** (`/metrica/:metricKey`):
+  añadir/editar ese dato, incluido corregir días del histórico. Es el **hogar** del dato.
+- **Foto / captura (multi-métrica = volcado del día)** → **un único flujo central
+  «Importar desde captura»**, lanzado como **acción desde `Hoy`** (hoja «Añadir datos de hoy»).
+  La IA extrae y **reparte cada valor a su métrica**. NO se trocea por página (una captura del
+  anillo trae varias métricas; filtrarla a una sola desperdicia el resto).
+- **Atajo de iOS** → sin UI (POST directo; la de menor fricción, para el día a día).
+- **Revisión** de lo leído con baja confianza → **aviso ligero en `Hoy`** («N datos sin
+  revisar →»), no pantalla propia.
+
+**Descartado:** UI en **Perfil** (es configuración, no datos diarios) y **pestaña propia** para
+capturas (la barra de navegación es para destinos, no acciones; el día a día ya es el Atajo).
+
 ## 5. Detalles técnicos a tener presentes (al implementar)
 
 - **Es una llamada a IA con visión** → **excepción consciente a CLAUDE.md §4**, pero legítima: es
