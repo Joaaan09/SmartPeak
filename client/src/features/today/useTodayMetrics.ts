@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest } from '../../lib/api';
-import type { DailyMetricsDto, LatestMetricsResponse } from './types';
+import type {
+  DailyMetricsDto,
+  DailyScores,
+  LatestMetricsResponse,
+} from './types';
 
 // Hook de datos biométricos de la pestaña Hoy (GET /api/metrics/latest).
 //
@@ -16,6 +20,8 @@ export type TodayStatus = 'loading' | 'error' | 'ready';
 export interface UseTodayMetrics {
   status: TodayStatus;
   dailyMetrics: DailyMetricsDto | null;
+  /** Scores biométricos derivados (calculados al vuelo en el backend). */
+  scores: DailyScores | null;
   error: string | null;
   refetch: () => void;
 }
@@ -23,6 +29,7 @@ export interface UseTodayMetrics {
 export function useTodayMetrics(): UseTodayMetrics {
   const [status, setStatus] = useState<TodayStatus>('loading');
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetricsDto | null>(null);
+  const [scores, setScores] = useState<DailyScores | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Evita setState tras desmontaje y descarta respuestas obsoletas (la última
@@ -35,10 +42,11 @@ export function useTodayMetrics(): UseTodayMetrics {
     if (showLoading) setStatus('loading');
     setError(null);
     try {
-      const { dailyMetrics: data } =
+      const { dailyMetrics: data, scores: scoresData } =
         await apiRequest<LatestMetricsResponse>('/metrics/latest');
       if (!mountedRef.current || reqId !== reqIdRef.current) return;
       setDailyMetrics(data);
+      setScores(scoresData);
       setStatus('ready');
     } catch {
       if (!mountedRef.current || reqId !== reqIdRef.current) return;
@@ -74,5 +82,5 @@ export function useTodayMetrics(): UseTodayMetrics {
     };
   }, [fetchMetrics]);
 
-  return { status, dailyMetrics, error, refetch };
+  return { status, dailyMetrics, scores, error, refetch };
 }

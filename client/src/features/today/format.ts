@@ -36,3 +36,20 @@ export function formatHours(hours: number): string {
 export function clampPct(pct: number): number {
   return Math.max(0, Math.min(100, pct));
 }
+
+// --- Desglose intradía (vista de detalle, DESIGN.md §12) --------------------
+
+/**
+ * Parsea una etiqueta horaria "HH:00" a su hora entera 0–23. Robusto a valores
+ * raros: si no es un número válido devuelve 0; acota fuera de rango a [0, 23].
+ */
+export function hourFromT(t: string): number {
+  const h = parseInt(t.slice(0, 2), 10);
+  if (Number.isNaN(h)) return 0;
+  return Math.max(0, Math.min(23, h));
+}
+
+/** Hora entera → etiqueta de eje de dos dígitos (8 → "08", 12 → "12"). */
+export function formatHourLabel(hour: number): string {
+  return String(hour).padStart(2, '0');
+}
