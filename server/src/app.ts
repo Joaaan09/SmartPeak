@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.js';
 import apiRoutes from './routes/index.js';
+import syncRoutes from './routes/sync.routes.js';
 
 export function createApp() {
   const app = express();
@@ -24,6 +25,11 @@ export function createApp() {
       credentials: true,
     }),
   );
+
+  // El sync del Atajo de iOS usa su PROPIO body parser (límite 2mb) y se monta
+  // ANTES del express.json() global (límite por defecto ~100kb), que rechazaría
+  // payloads grandes con 413 antes de llegar al handler.
+  app.use('/api/sync', syncRoutes);
 
   app.use(express.json());
   app.use(cookieParser());

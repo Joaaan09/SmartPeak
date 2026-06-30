@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-06-29 — Endpoint de sincronización biométrica (recepción · paso 1: inspección)
+
+- **Petición**: añadir el endpoint receptor del POST del Atajo de iOS (Health Auto Export) sin
+  exponer el backend al exterior. Partida: un snippet del usuario en JS (Express pelado).
+- **Aclaración clave (al usuario)**: el backend NO necesita exponerse — `/api/*` ya es público vía
+  el nginx del frontend (mismo origen). El endpoint es `POST /api/sync/health`, **cero cambios de
+  infra**. "Exponer solo ese endpoint" se resuelve con auth (token), no con red.
+- **Decisiones (consultadas al usuario)**: auth por **token POR USUARIO** (`syncToken`, header
+  `x-sync-token`) en vez de API key global; **primer paso solo inspección** (log del shape, sin
+  persistir); **disparo = automático (HAE programado) + botón deep link**, descartado el push
+  Telegram/Pushover. Detalle en `decisiones.md` (2026-06-29 · Endpoint de sincronización).
+- **Implementado** (ejecutor): `models/User.ts` (+`syncToken` `select:false`, índice unique+sparse,
+  oculto en `toJSON`), `middleware/syncAuth.ts` (`requireSyncToken`), `controllers/sync.controller.ts`
+  (`syncHealth`, inspección de shape), `routes/sync.routes.ts` (`POST /health`, parser propio 2mb
+  TRAS la auth), `app.ts` (monta `/api/sync` antes del json global), `scripts/sync-token.ts` + npm
+  `sync:token`.
+- **Revisión adversarial**: APROBADO con reservas. Pruebas HTTP reales: 150kb→200, 3MB→413 (límite
+  propio), sin token→401 sin parsear body, ruta normal 150kb→413 (confirma por qué sync va antes del
+  json global). Sin fugas: el token nunca sale en respuestas/logs (salvo el alta única en el script).
+- **Reservas resueltas (orquestador)**: el `typecheck` no cubría `scripts/` → añadido
+  `tsconfig.scripts.json` + `typecheck:scripts` (encadenado en `typecheck`); el log de tamaño pasó a
+  `Buffer.byteLength` (bytes reales, no UTF-16). `npm --prefix server run typecheck` (src + scripts)
+  en verde.
+- **Pendiente**: probar con el JSON real del Atajo para ver el shape → modelar/persistir la
+  biometría; botón deep link en la UI; endpoint para generar/rotar el token desde la web. Sin
+  commitear.
+
 ## 2026-06-29 — Dockerización y despliegue (commit + push a staging y main)
 
 - **Objetivo**: desplegar en el VPS propio (84.247.191.244, Debian 13) con Docker tras el Nginx

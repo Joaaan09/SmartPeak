@@ -205,6 +205,40 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-29 · Endpoint de sincronización biométrica (recepción del Atajo de iOS)
+
+- **Decisión:** el Atajo de iOS (Health Auto Export) envía el JSON de Salud por **HTTP POST a
+  `POST /api/sync/health`**. **No se expone el backend al exterior**: la ruta cuelga del `/api` que
+  el nginx del frontend ya proxya (mismo origen) ⇒ **cero cambios de infraestructura** (ni redes,
+  ni NPM, ni `reverse_proxy_network`). "Exponer solo ese endpoint" se resuelve en la capa de
+  aplicación (auth), no en red — todo `/api/*` ya es público por necesidad (el navegador llama
+  `/api/auth`, etc.).
+- **Auth por token POR USUARIO (no API key global):** cada `User` guarda un `syncToken` opaco
+  (`crypto.randomBytes(32).base64url`, campo `select:false`, índice `unique+sparse`, borrado en el
+  `transform` de `toJSON`). El Atajo lo manda en el header **`x-sync-token`**; el middleware
+  `requireSyncToken` resuelve el dueño con `User.findOne({ syncToken })`. Ventajas: revocable por
+  usuario, escalable a multiusuario, y la comparación la hace Mongo (sin timing-attack en JS).
+  **Descartada** la API key global del snippet inicial (no identifica al usuario, no revocable).
+- **Límite de body SOLO en esa ruta:** `/api/sync` se monta con su propio
+  `express.json({ limit: '2mb' })` **antes** del `express.json()` global (~100kb) y **después** de
+  la auth (no se parsean 2mb sin token válido). Así el resto de `/api` mantiene el límite estricto y
+  solo sync acepta el payload grande. El `2mb` es **provisional** (a medir con el payload real);
+  recordar que hay **3 capas** de límite (NPM → nginx frontend `client_max_body_size` → Express) y
+  todas deben permitir el tamaño.
+- **Primer paso = solo inspección:** el endpoint loguea la estructura del JSON y responde 200; aún
+  **no persiste** (no hay modelo de biometría todavía). Se modelará la persistencia con el shape
+  real ya observado. Script `npm run sync:token -- <email>` para asignar el token y probar sin
+  login (muestra el token una sola vez).
+- **Disparo de la sync (cómo se ejecuta el Atajo):** **automático** (Health Auto Export programado
+  por intervalo) + **botón "Sincronizar" = deep link directo** `shortcuts://run-shortcut?name=...`
+  para forzar desde el móvil. **Descartado** (por ahora) el plan de **push (Telegram/Pushover) +
+  deep link**: añade dependencia externa y solo aporta si se dispara desde el escritorio; el caso
+  real es móvil (CLAUDE.md §1). Queda en reserva si más adelante se necesita disparar desde el PC.
+- **Pendiente:** botón deep link en la UI (Perfil/Hoy), endpoint autenticado para que el usuario
+  genere/rote su `syncToken` desde la web, y el modelo + persistencia de la biometría.
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

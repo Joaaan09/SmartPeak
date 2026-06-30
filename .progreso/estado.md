@@ -48,6 +48,14 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **Endpoint de sincronización biométrica — paso 1 (recepción/inspección) HECHO y revisado
+  (aprobado).** `POST /api/sync/health` autenticado por **token por usuario** (`syncToken`, header
+  `x-sync-token`); inspecciona el shape del JSON por consola, **aún NO persiste**. Body parser propio
+  de `2mb` solo en esa ruta (montada antes del `express.json()` global). Sin exponer el backend
+  (cuelga del `/api` ya proxyado por el nginx del frontend). Token de prueba:
+  `npm --prefix server run sync:token -- <email>`. Disparo decidido: **automático (HAE programado) +
+  botón deep link**; push descartado. Revisor: aprobado con reservas (typecheck de `scripts/` y log
+  de bytes) ya **resueltas**. Detalle en `decisiones.md`/`log.md` (2026-06-29). **Sin commitear.**
 - **Realineado de diseño con la landing (2026-06-29): COMMITEADO** en `staging`
   (commit `refactor(ui): refina sistema de diseño, marca y pestaña Hoy`).
 - **✅ DESPLEGADO Y FUNCIONANDO en producción (2026-06-29):** `https://smartpeak.joan-coll.com`
@@ -63,6 +71,11 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## Siguiente paso (elegir)
 
+0. **Cerrar el flujo de sync biométrico**: configurar el Atajo de iOS (Health Auto Export → POST a
+   `https://smartpeak.joan-coll.com/api/sync/health` con header `x-sync-token`) + HAE programado;
+   ver el JSON real que loguea el endpoint → **modelar y persistir** la biometría (modelo Mongoose +
+   validación Zod). Luego: botón "Sincronizar" como deep link en la UI y endpoint para generar/rotar
+   el token desde la web. Subir `client_max_body_size` (nginx + NPM) si el payload real > ~1MB.
 1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por
    escalones, añadir/quitar desde catálogo, y **persistencia del layout** `{widgetId,x,y,w,h}`
    (vía `PATCH /users/me` o endpoint nuevo). DESIGN.md §5.

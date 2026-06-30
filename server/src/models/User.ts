@@ -16,6 +16,9 @@ const userSchema = new Schema(
     },
     // Nunca se expone: select:false lo excluye de las consultas por defecto
     passwordHash: { type: String, required: true, select: false },
+    // Token por usuario para autenticar el POST del Atajo de iOS (sync biométrico).
+    // Sin `default`: el índice sparse+unique no debe chocar entre usuarios sin token.
+    syncToken: { type: String, select: false, index: { unique: true, sparse: true } },
     name: { type: String, required: true, trim: true },
     sex: { type: String, enum: SEX_VALUES, required: true },
     birthDate: { type: Date, required: true },
@@ -38,6 +41,7 @@ const userSchema = new Schema(
         delete ret._id;
         delete ret.__v;
         delete ret.passwordHash;
+        delete ret.syncToken;
         return ret;
       },
     },
