@@ -239,6 +239,31 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-30 · Modelo de datos biométricos + inventario REAL del anillo
+
+- **Inventario REAL del anillo** (KSIX Ring vía Apple Health), confirmado capturando el payload de
+  HAE v2 en producción: el anillo SOLO exporta **4 métricas**: `sleep_analysis` (fases
+  total/deep/rem/core/awake + tiempos), `heart_rate` (Min/Max/Avg diario), `step_count` (qty) y
+  `active_energy` (qty, en **kJ**). **NO exporta** HRV, SpO2, FC en reposo, frecuencia respiratoria,
+  temperatura ni peso — la app del anillo los recoge pero no los vuelca a Salud (limitación dura).
+- **Readiness sin HRV automático:** se construirá con **sueño + desviación de FC en reposo** (proxy:
+  `heart_rate.Min`) **+ carga** (pasos/energía). HRV/SpO2/peso entran por **ENTRADA MANUAL** desde la
+  web (el usuario los ve en la app del anillo). Honesto: no es un clon de Whoop, pero es un readiness
+  defendible. El registro de ENTRENO (series/reps/carga/RPE) es otro bloque aparte, no biométrico.
+- **Modelo de datos = documento diario por usuario** (`DailyMetrics`): 1 doc por `(userId, date)`,
+  **índice único compuesto**, **upsert idempotente**. `date` como string `"YYYY-MM-DD"` (substring
+  del `date` de HAE; evita líos de zona horaria). Métricas normalizadas en `metrics{}` con `source`
+  por métrica; `readiness` cacheado en el mismo doc (alinea con la caché diaria, §4). **Descartada**
+  la colección de muestras normalizada (1 doc/métrica): más queries para la vista diaria y cacheo
+  menos directo. El **upsert mergea con `$set` dinámico** solo de las métricas presentes → el sync
+  **nunca pisa** los campos manuales (HRV/SpO2/peso) ni el readiness del mismo día.
+- **Formato HAE v2:** mezcla mayúsculas (`Min/Max/Avg` vs `qty`); energía en kJ → se guarda en
+  **kcal** (÷4.184). Normalizador defensivo: ignora métricas desconocidas y puntos sin fecha.
+- **Pendiente:** cálculo del Readiness; entrada manual (endpoint + UI Perfil) de HRV/SpO2/peso; vista
+  Hoy/Tendencias contra datos reales; tests (mongodb-memory-server ya instalado).
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

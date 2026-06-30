@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-06-30 — Persistencia biométrica + inventario del anillo (sync paso 2)
+
+- **Inspección del shape real (paso 1 cerrado):** capturado el JSON real de HAE v2 con un volcado
+  temporal en logs (luego **revertido**, sin dejar biometría en producción). El anillo KSIX SOLO
+  exporta 4 métricas: `sleep_analysis`, `heart_rate` (Min/Max/Avg), `step_count`, `active_energy`
+  (kJ). NO exporta HRV/SpO2/FC reposo/resp/temp/peso. Decidida ENTRADA MANUAL para HRV/SpO2/peso.
+- **Flujo end-to-end probado desde el iPhone:** Atajo con acción **Export Health Metrics** (plan
+  Basic; la REST API nativa es Premium) → **Obtener contenido de URL** POST con `x-sync-token` +
+  `Content-Type: application/json` → 200. Periodo *Previous Day*, agregación *Días*, versión **v2**.
+- **Persistencia (paso 2, ejecutor):** modelo `DailyMetrics` (doc diario por usuario, índice único
+  `{userId,date}`, upsert idempotente con merge), `validation/sync.schema.ts` (Zod tolerante),
+  `services/syncBiometrics.ts` (normaliza HAE→métricas, agrupa por día, kJ→kcal), controller
+  reescrito (`parse`→`ingest`→`{message, days, saved}`).
+- **Revisión adversarial: APROBADO.** El revisor levantó `mongodb-memory-server` y corrió pruebas
+  REALES: 17/17 + Zod (9 payloads) + casos límite. Confirmado lo crítico: merge sin pisar campos
+  manuales/readiness, cast `userId`→ObjectId, idempotencia, índice único bajo concurrencia. Solo
+  hallazgos 🟢 bajos (E11000 en carrera teórica, "último gana" intradía) no bloqueantes.
+- Commit + merge a `main` + redeploy backend en producción. **Pendiente:** cálculo Readiness,
+  entrada manual (UI + endpoint), vista Hoy/Tendencias con datos reales, tests permanentes.
+
 ## 2026-06-29 — Endpoint de sincronización biométrica (recepción · paso 1: inspección)
 
 - **Petición**: añadir el endpoint receptor del POST del Atajo de iOS (Health Auto Export) sin

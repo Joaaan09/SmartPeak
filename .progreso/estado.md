@@ -2,7 +2,7 @@
 
 > Léeme al empezar. Actualízame al terminar cada sesión.
 
-**Última actualización:** 2026-06-29
+**Última actualización:** 2026-06-30
 
 ## Dónde estamos
 
@@ -48,14 +48,15 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
-- **Endpoint de sincronización biométrica — paso 1 (recepción/inspección) HECHO y revisado
-  (aprobado).** `POST /api/sync/health` autenticado por **token por usuario** (`syncToken`, header
-  `x-sync-token`); inspecciona el shape del JSON por consola, **aún NO persiste**. Body parser propio
-  de `2mb` solo en esa ruta (montada antes del `express.json()` global). Sin exponer el backend
-  (cuelga del `/api` ya proxyado por el nginx del frontend). Token de prueba:
-  `npm --prefix server run sync:token -- <email>`. Disparo decidido: **automático (HAE programado) +
-  botón deep link**; push descartado. Revisor: aprobado con reservas (typecheck de `scripts/` y log
-  de bytes) ya **resueltas**. Detalle en `decisiones.md`/`log.md` (2026-06-29). **Sin commitear.**
+- **Sincronización biométrica — pasos 1 (recepción/inspección) y 2 (PERSISTENCIA) HECHOS, revisados
+  (aprobados) y DESPLEGADOS en producción.** `POST /api/sync/health` (token por usuario, header
+  `x-sync-token`) valida con Zod, normaliza el payload de HAE v2 y hace **upsert de un documento
+  diario** (`DailyMetrics`, 1 por `(userId, date)`, índice único, merge que no pisa campos manuales).
+  **Flujo probado end-to-end desde el iPhone** (Atajo *Export Health Metrics* → POST, plan Basic).
+  Inventario real del anillo: solo `sleep_analysis`, `heart_rate`, `step_count`, `active_energy`
+  (sin HRV/SpO2/peso → irán por **entrada manual**). Revisor con tests reales (mongodb-memory-server):
+  17/17 OK. Detalle en `decisiones.md`/`log.md` (2026-06-30). Token de prueba:
+  `npm --prefix server run sync:token -- <email>`. Disparo: **automático (HAE programado) + deep link**.
 - **Realineado de diseño con la landing (2026-06-29): COMMITEADO** en `staging`
   (commit `refactor(ui): refina sistema de diseño, marca y pestaña Hoy`).
 - **✅ DESPLEGADO Y FUNCIONANDO en producción (2026-06-29):** `https://smartpeak.joan-coll.com`
@@ -71,11 +72,13 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## Siguiente paso (elegir)
 
-0. **Cerrar el flujo de sync biométrico**: configurar el Atajo de iOS (Health Auto Export → POST a
-   `https://smartpeak.joan-coll.com/api/sync/health` con header `x-sync-token`) + HAE programado;
-   ver el JSON real que loguea el endpoint → **modelar y persistir** la biometría (modelo Mongoose +
-   validación Zod). Luego: botón "Sincronizar" como deep link en la UI y endpoint para generar/rotar
-   el token desde la web. Subir `client_max_body_size` (nginx + NPM) si el payload real > ~1MB.
+0. **Sobre el sync biométrico (recepción + persistencia): HECHO y desplegado.** Próximos sobre esta
+   base: (a) **cálculo del Readiness** en el backend (sueño + desviación FC reposo + carga; medias en
+   JS, cache diaria §4); (b) **entrada manual** de HRV/SpO2/peso (endpoint autenticado + UI en Perfil,
+   `source:"manual"` en el mismo `DailyMetrics`); (c) **vista Hoy/Tendencias contra datos reales**
+   (sustituir el mock `data.ts`); (d) botón "Sincronizar" deep link + endpoint generar/rotar token;
+   (e) tests permanentes (mongodb-memory-server ya instalado). Subir `client_max_body_size` solo si
+   el payload supera ~1MB (hoy ~800 bytes/día, sobra margen).
 1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por
    escalones, añadir/quitar desde catálogo, y **persistencia del layout** `{widgetId,x,y,w,h}`
    (vía `PATCH /users/me` o endpoint nuevo). DESIGN.md §5.
