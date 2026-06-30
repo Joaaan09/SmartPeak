@@ -329,6 +329,194 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
 
 ---
 
+### 2026-06-30 · Motor de cálculo de scores deterministas (sin IA)
+
+- **Decisión (del usuario):** implementar por **código** (cero tokens) todos los scores
+  derivados de la biometría: **Calidad de sueño**, **Preparación/Recuperación**, **Esfuerzo
+  del día (strain)**, **Nivel de energía** y **Estrés**. Esto **revierte** el alcance previo
+  "solo datos reales" (2026-06-30) que pospuso el readiness: ahora se calcula, pero con
+  **manejo explícito de cold-start** (ver abajo). Refuerza CLAUDE.md §4: lo numérico NO lo
+  toca la IA; la IA queda reservada al texto del coach (fase posterior).
+- **Por qué código y no IA:** ningún producto serio (Whoop/Oura/Garmin/HRV4Training) calcula
+  recuperación con un LLM; usan estadística sobre la **línea base personal**. Un LLM ahí sería
+  caro, no determinista, no auditable y MENOS fiable que una fórmula calibrada.
+- **Datos disponibles (anillo KSIX vía Apple Health):** sueño (total/deep/rem/core/awake en
+  **horas decimales**), FC (min/max/avg + serie horaria), pasos, energía activa (kcal). **Sin
+  HRV/SpO2/peso automáticos** (entrada manual futura). **FC reposo = proxy `heartRate.min`**.
+- **Fórmulas y pesos fijados** (ajustables; defaults de dominio):
+  - **Calidad de sueño** (0–100): duración vs 7,5–9 h **0,40** · reparador (deep 13–23% + REM
+    20–25%) **0,30** · eficiencia dormido/en-cama **0,20** · continuidad (penaliza awake)
+    **0,10**. Estados: ≥85 excelente · 70–84 bueno · 50–69 regular · <50 malo.
+  - **Preparación/Recuperación** (0–100): sueño anoche **0,35** · FC reposo vs baseline (z-score)
+    **0,30** · HRV vs baseline **0,20** (solo si hay dato manual; si no, se **redistribuye**) ·
+    carga aguda/crónica (ACWR-like) **0,15**. Pesos **renormalizados** por disponibilidad.
+    Estados: ≥75 recovered · 50–74 moderate · <50 fatigue (encaja con el anillo por estado).
+  - **Esfuerzo/Strain** (0–100): energía activa vs media **0,45** · carga cardíaca por tiempo en
+    zonas de FC (zonas desde FCmax **208 − 0,7·edad**, Tanaka, sobre la serie horaria) **0,40** ·
+    pasos vs media **0,15**.
+  - **Nivel de energía** (Body Battery simplificado): `≈ 0,6·recuperación + 0,4·(100 − strain)`.
+  - **Estrés** (0–100): proxy de carga autonómica `FC media/FC basal` **0,5** · deuda de sueño
+    (100 − sleepScore) **0,3** · elevación de FC reposo (z) **0,2**.
+- **Cold-start (regla):** los z-scores (FC reposo, carga) exigen ~7–14 días de histórico. Con
+  `n < 7` la Recuperación se apoya casi solo en el sueño y se marca **`confidence: "low"`**;
+  nunca se muestra un número con falsa precisión. `medium` 7–13 d · `high` ≥14 d.
+- **Estrés = métrica débil (asterisco honesto):** sin HRV continuo no es un estrés clínico
+  (Garmin/Whoop usan HRV de muñeca todo el día). Se entrega como **estimación** (`confidence:
+  "proxy"`), con menor prominencia visual, hasta que entre el HRV manual.
+- **Arquitectura:** funciones **puras y testeables** en `server/src/services/scores/` (una por
+  métrica + helper de baseline + orquestador `computeDailyScores(today, history, user)`),
+  alimentadas por una query de histórico (N días) que **aún no existe**. Se invocan en lectura
+  (`GET /api/metrics/latest`) y se **cachean** en `readiness` del doc diario (`strict:false`,
+  **sin migración**). El DTO está **duplicado a mano** en `client/src/features/today/types.ts`:
+  al ampliar el contrato hay que tocar ambos lados.
+- **Alternativas descartadas:** calcular readiness con IA (caro/no determinista); esperar al HRV
+  manual para arrancar (el usuario quiere los scores ya); persistir scores en colección aparte
+  (el doc diario ya es la unidad de caché, §4).
+
+---
+
+### 2026-06-30 · Desglose intradía: vista de detalle a pantalla completa + sueño por fases
+
+- **Decisión (2 dilemas consultados al usuario):**
+  1. **Apertura del desglose = vista a pantalla completa** (push estilo Apple Salud) en su **propia
+     ruta** (`/metrica/:metricKey`) **anidada bajo `AppLayout`** → la regleta/tab bar persisten y la
+     URL es real (el atrás del navegador cierra). Descartado: **bottom-sheet/modal** (más ligero
+     pero menos inmersivo y sin URL propia).
+  2. **Sueño = desglose por FASES** (profundo/REM/ligero/despierto + inicio→fin), **no por horas**:
+     Apple exporta el sueño 1/día, no hay serie horaria. Descartado: dejar la card de sueño **no
+     clickable** (rompería la coherencia de que las 4 cards reales abren desglose).
+- **Motivo:** el uso es mayoritariamente móvil y el patrón de detalle de Apple Salud (push con back
+  + tab bar visible) es el más reconocible; la URL propia da navegabilidad y compartibilidad. El
+  sueño merece desglose aunque sea por fases (es señal valiosa para el rol powerlifting/salud).
+- **Implementación:** solo las cards en estado `data` son interactivas (se renderizan como `<a>` vía
+  `Widget to?`); `empty`/`soon` no navegan. Gráficas **SVG hechas a mano** (sin librería, como
+  `TrendWidget`), color solo en el dato (`--m-*`), cifras/ejes en mono. DESIGN.md **§12** fija el
+  patrón (cards clickables, tipos de gráfica, estados, motion + `prefers-reduced-motion`).
+- **Sin backend:** `GET /api/metrics/latest` ya devolvía el documento completo con las series; el
+  DTO del front (`types.ts`) se amplió para tiparlas (sigue **duplicado a mano** respecto al back).
+- **Tooltip interactivo de las gráficas (§12b):** el valor de cada hora/fase se muestra **bajo
+  demanda** — **hover** en puntero fino, **tap** en táctil. Se distingue el gesto por `pointerType`
+  **y** se gatea el hover-follow con `matchMedia('(hover: hover) and (pointer: fine)')` (regla dura
+  §11). Es **mejora progresiva**: el dato ya vive en el DOM (cifra-héroe + `DetailStats` +
+  `aria-label`), el tooltip va `aria-hidden`. Descartado rotular todos los valores (satura).
+- **Scrub táctil SIN captura de puntero (decisión técnica clave):** en móvil se arrastra el dedo
+  para recorrer la gráfica. Se **descartó `setPointerCapture`** (la primera implementación lo usaba):
+  capturar el puntero en el `pointerdown` **anula `touch-action: pan-y` y secuestra el scroll
+  vertical** de la página si el gesto empieza sobre la gráfica. En su lugar **no se captura**: el
+  navegador arbitra — arrastre **vertical** = scroll de página (dispara `pointercancel`, que oculta
+  el tooltip) · arrastre **horizontal** = scrub (los `pointermove` llegan al elemento, de ancho
+  completo). Además **mata la selección de texto/lupa de iOS** (`user-select:none` +
+  `-webkit-touch-callout:none`, clase `.sp-chart-scrub`). La mecánica vive en un hook genérico
+  compartido `usePointerScrub(pickIndex, count)` (lo usan el scrubber de horas y el de fases del
+  sueño) → sin duplicación. Coste asumido: si el dedo abandona la gráfica verticalmente en mitad de
+  un scrub horizontal, el seguimiento se pausa (sin captura) — irrelevante en la práctica.
+- **Pendiente:** validación visual/táctil en navegador/móvil real con datos horarios (375px + desktop).
+
+---
+
+### 2026-06-30 · PWA instalable («Añadir a pantalla de inicio») con enfoque MANUAL
+
+- **Decisión:** convertir la web en **PWA instalable** (Android e iOS) **sin `vite-plugin-pwa`**:
+  manifest propio + metas en `index.html` + service worker escrito a mano. **Motivo:** minimalismo
+  del proyecto, **cero magia de build** y control total; no se necesita el precache de Workbox ni
+  su tamaño. **Alternativas descartadas:** `vite-plugin-pwa`/Workbox (genera SW y precache que no
+  queremos mantener); no hacer PWA (se pierde el "Añadir a pantalla de inicio" pedido).
+- **Service worker MÍNIMO, NO offline-first:** `client/public/sw.js` solo habilita
+  **instalabilidad + carga rápida del shell + auto-update**. Estrategia: **network-first** en
+  navegación, **cache-first** en `/assets`; **ignora `/api` y terceros**; `skipWaiting` +
+  `clients.claim`. Registrado **solo en producción** desde `main.tsx`. **Motivo:** la app depende
+  del backend; un offline real sería **humo**. **No** añade llamadas a IA → **cumple la regla 4 de
+  CLAUDE.md**.
+- **`apple-mobile-web-app-status-bar-style = black`** (NO `black-translucent`): el layout solo
+  respeta `safe-area-inset-bottom` (TabBar), **no** el top; con `translucent` el header se
+  solaparía con la barra de estado. **Reconsiderar `black-translucent`** (look inmersivo) si más
+  adelante se añade `safe-area-inset-top` al header.
+- **Captura de `beforeinstallprompt` a nivel de APP (store de módulo):** se registra en
+  `installStore.ts`, importado al arranque desde `main.tsx`, **NO** en el `useEffect` del
+  componente (que vive en Perfil y se monta tarde → **perdería el evento**, que Chrome dispara una
+  sola vez al cargar). El hook `useInstallPrompt` lee el store con `useSyncExternalStore`. **Este
+  bug lo detectó el revisor** y se corrigió antes de cerrar.
+- **Iconos:** **iOS** usa `apple-touch-icon.png` (180px, ya existía); **Android** usa el manifest
+  con `any` (PNG existentes) + **`maskable`** full-bleed (`brand/icon-maskable-{192,512}.png`)
+  **generados a mano** (script Node/zlib sobre fondo `#0E0F12`) por falta de tooling de imagen
+  (no había ImageMagick ni sharp). Manifest: `name`/`short_name` SmartPeak, `display: standalone`,
+  `bg`/`theme` `#0E0F12`.
+- **Nginx (`client/nginx.conf`):** bloques `location =` para `/sw.js` (**`no-store`**, que el SW se
+  actualice siempre) y `/manifest.webmanifest` (**`no-cache`** + `default_type
+  application/manifest+json`).
+- **UI (affordance en Perfil):** sección **«Instalación»** monocroma en `ProfilePage.tsx` que
+  **bifurca por plataforma** — Android/Chrome → botón que dispara el **prompt nativo**; iOS Safari
+  → **guía en `<details>`** (Compartir → Añadir a pantalla de inicio). Código en
+  `client/src/features/pwa/` (`installStore.ts` + `useInstallPrompt.ts` + `InstallApp.tsx`) +
+  iconos `DownloadIcon`/`ShareIcon`. **Patrón documentado en DESIGN.md §13.**
+
+---
+
+### 2026-06-30 · Estrés vía HRV manual (no se teclea el estrés del anillo) + presentación de scores en Hoy
+
+- **Contexto:** la app del anillo (KSIX) calcula estrés y HRV con HRV continuo pero **no los exporta
+  a Apple Health**. El usuario dudaba entre teclear el estrés ya calculado o teclear la HRV y derivar
+  el estrés en el backend.
+- **Decisión:** se prioriza la **entrada manual de HRV** (lectura matutina), **no** el estrés.
+  Motivo: la HRV es un dato de **entrada** que alimenta varias salidas (completa el componente HRV del
+  Readiness, habilita el estrés derivado y da una tendencia de HRV útil); el estrés del anillo es un
+  número de **salida** opaco (escala propietaria de KSIX) que no alimenta nada más. Más información por
+  teclazo.
+- **Estrés derivado:** se calculará desde la HRV vs baseline (HRV baja → estrés alto). **Matiz honesto:**
+  será un *"estrés autonómico en reposo"* (foto matutina), **no** el estrés continuo de la pulsera. El
+  proxy de FC del motor (`computeStress`) queda como fallback degradado y **no se muestra por defecto**.
+- **Alcance de esta tanda:** se cablean en Hoy los **4 scores sólidos** con datos del anillo
+  (Preparación · Calidad de sueño · Nivel de energía · Esfuerzo). El **Estrés** queda *"Próximamente
+  (requiere HRV)"*. **Siguiente bloque:** entrada manual de HRV → activa el estrés y completa el Readiness.
+  Orden acordado: **validación visual del usuario** de los 4 scores antes de montar la entrada de HRV.
+- **Presentación (aprobada por el usuario):** Preparación = hero, anillo **por estado** (pos/warn/neg) +
+  **badge de confianza** en cold-start. Calidad de sueño / Energía / Esfuerzo = cards con **color de
+  métrica propio** y el **estado en el caption** (texto), **no** semáforo — porque el **esfuerzo es
+  neutro** (un día de mucha carga no es "malo/rojo"); solo Preparación y el futuro Estrés tienen valencia.
+  Sueño: el anillo pasa a **calidad %**, las horas a sub-dato. Detalle visual en **DESIGN.md §14**.
+- **Alternativas descartadas:** teclear el estrés del anillo (opaco, no reutilizable); mostrar el estrés
+  con el proxy de FC ya (flojo, el usuario tiene acceso a la HRV); pintar el esfuerzo por semáforo
+  (implicaría una valencia buena/mala que el esfuerzo no tiene).
+
+---
+
+### 2026-06-30 · Skills de diseño: del global del Mac al REPO; `impeccable` descartada
+
+- **Contexto / corrección:** la decisión 2026-06-27 instaló las 4 skills en **`~/.claude/skills/`**
+  (home **global del Mac**), no en el repo. Al clonar el proyecto al VPS, ese directorio no existe
+  → en `/home/kuoyii/servers/smartpeak` **no había ninguna skill** (solo el `README.md` de
+  `.claude/skills/`). Las copias originales viven en otros proyectos del usuario
+  (`total-grind/.agents/skills/`).
+- **Decisión:** las skills de diseño **viven DENTRO del repo** en **`.claude/skills/`**
+  (commiteables, viajan con el proyecto y las carga el harness de Claude Code como `/skill`).
+  Corrige la ubicación de la decisión 2026-06-27 (deroga `~/.claude/skills/` global).
+- **Alcance = 3 skills (no 4):**
+  - `design-taste-frontend` ← repo `Leonxlnx/taste-skill`
+  - `emil-design-eng` ← repo `emilkowalski/skills`
+  - `review-animations` ← repo `emilkowalski/skills`
+- **`impeccable` DESCARTADA (motivo):** no es una skill de *prompt* sino un **sistema** con
+  instalador propio (`npx impeccable install`) que planta ~50 scripts `.mjs` en
+  `.agents/skills/impeccable/` + 23 comandos slash. Solapa con **DESIGN.md**, que ya es el sistema
+  de diseño **autoritativo** del proyecto; su valor (imponer un sistema donde no lo hay) no aplica
+  aquí. Lo que ya se absorbió de sus IDEAS sigue integrado en DESIGN.md (§8 motion, §11 interacción,
+  veto del *hero-metric*) — eso no se revierte; solo se deja de instalar la herramienta.
+- **Cómo se instalan ahora:** vía CLI `npx skills add <repo> -a claude-code --copy` (formato Claude
+  Code: carpeta + `SKILL.md` con frontmatter). `design-taste-frontend` y `emil-design-eng` se
+  **copiaron desde la copia local** de `total-grind` (sin red, son `SKILL.md` puros sin scripts).
+- **Bloqueo del harness (importante):** el **auto-mode classifier** veta tanto **descargar** skills
+  de repos que el agente descubrió por web (*Untrusted Code Integration*) como **auto-otorgarse** el
+  permiso para hacerlo (*Self-Modification*). Solo el **usuario** lo destraba: corriendo el `npx`
+  él mismo, añadiendo una regla `Bash(npx skills add:*)` en `.claude/settings.local.json`, o fuera
+  de auto-mode.
+- **Estado:** 2/3 instaladas (`design-taste-frontend`, `emil-design-eng`); **`review-animations`
+  pendiente de descarga** por el usuario (`npx -y skills add emilkowalski/skills --skill
+  review-animations -a claude-code --copy -y`).
+- **Pendiente doc:** CLAUDE.md §5 ya actualizado (3 skills); revisar si limpiar las menciones a
+  `impeccable` en DESIGN.md §0/§8/§11 (hoy son atribuciones conceptuales válidas → de momento se
+  conservan).
+
+---
+
 ## Pendientes de decidir (aún abiertas)
 
 - Modelo de IA concreto.

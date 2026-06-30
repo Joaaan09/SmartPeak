@@ -48,6 +48,69 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **SCORES BIOMÉTRICOS DETERMINISTAS — HECHOS, revisados (3 pasos APROBADOS) y ✅ VALIDADOS
+  VISUALMENTE POR EL USUARIO (2026-06-30).** Motor de cálculo **puro** en
+  `server/src/services/scores/` (5 scores: **Calidad de sueño · Preparación/Readiness ·
+  Esfuerzo/Strain · Nivel de energía · Estrés-proxy**) con **baseline personal** (z-scores
+  muestrales), **renormalización de pesos por disponibilidad** y **cold-start**
+  (`confidence: low/medium/high`). Funciones puras + **28 tests** (suite server 37/37). El
+  directorio `server/src/services/scores/` está **sin commitear (untracked)**.
+  **Integrados al vuelo** en `GET /api/metrics/latest` → responde `{ dailyMetrics, scores }`
+  **sin persistir** (la caché en Mongo se reserva para la IA, regla §4); `.sort({ date: -1 })`
+  obligatorio (contrato del motor). **UI de Hoy cableada:** Readiness **real** (anillo por estado
+  + badge de confianza en cold-start), card de **Sueño** con anillo = **calidad %** (horas a
+  sub-dato), cards nuevas de **Nivel de energía** y **Esfuerzo** (color de métrica + estado en el
+  caption), **Estrés** en «Próximamente (requiere HRV)». 2 tokens nuevos (`--m-energylvl` cian,
+  `--m-strain` violeta) → **DESIGN.md §14**. Revisor APROBADO en 3 pasos (motor / integración /
+  UI, sin críticos); typecheck · lint · build en verde. **Decidido** (ya en `decisiones.md`):
+  estrés **vía HRV manual** (derivado de la HRV, no del valor del anillo) e ingesta de lo NO
+  exportado por **captura + IA** con 3 vías (teclado / foto / Atajo de iOS) → ver el nuevo
+  [`dispositivo.md`](dispositivo.md). **Siguiente:** bloque de entrada manual de HRV (3 vías) →
+  activa el estrés derivado y completa el componente HRV del Readiness.
+- **PWA INSTALABLE («Añadir a pantalla de inicio») — HECHA, revisada (APROBADA) y ✅ VALIDADA EN
+  IPHONE (Safari) POR EL USUARIO (2026-06-30) — el caso de uso principal.** La web es ahora una PWA instalable en Android e iOS,
+  con affordance en la pestaña **Perfil**. Enfoque **MANUAL** (sin `vite-plugin-pwa`): manifest
+  propio (`client/public/manifest.webmanifest`, `standalone`, bg/theme `#0E0F12`, iconos `any` +
+  `maskable`), metas en `client/index.html` (`link rel="manifest"`, `mobile-web-app-capable`,
+  `apple-mobile-web-app-*` con `status-bar-style=black`), **SW mínimo** `client/public/sw.js`
+  (network-first en navegación · cache-first en `/assets` · **ignora `/api`** y terceros;
+  `skipWaiting`+`clients.claim`, registrado **solo en producción** desde `main.tsx`) y reglas en
+  `client/nginx.conf` (`/sw.js` no-store, `/manifest.webmanifest` no-cache + content-type). UI en
+  `client/src/features/pwa/` (`installStore.ts` + `useInstallPrompt.ts` con `useSyncExternalStore`
+  + `InstallApp.tsx`); sección **«Instalación»** monocroma en `ProfilePage.tsx` que **bifurca por
+  plataforma** (Android/Chrome → prompt nativo; iOS Safari → guía Compartir→Añadir en `<details>`).
+  Iconos maskable generados a mano (script Node/zlib, sin ImageMagick/sharp). **NO offline-first**
+  (la app depende del backend) → **cumple la regla 4 de CLAUDE.md** (no añade llamadas a IA).
+  **Revisor APROBADO** tras corregir la captura tardía de `beforeinstallprompt` (se movió al store
+  global). DESIGN.md **§13** documenta el patrón. **Verificación:** typecheck · lint · build en
+  verde. **Falta (no prioritario):** probar instalación real en **Android (Chrome)** + Lighthouse
+  «Installable» (iOS ya validado). Detalle en `log.md`/`decisiones.md`.
+- **Desglose intradía: cards de «Hoy» clickables → vista de detalle por métrica — HECHO, revisado
+  (APTO), PENDIENTE DE VALIDACIÓN VISUAL (2026-06-30).** Primer consumo del intradía ya ingerido.
+  **Sin backend** (`GET /api/metrics/latest` ya devolvía las series). Front: solo las cards en
+  estado `data` (Sueño·FC·Pasos·Energía) navegan a `/metrica/:metricKey` (ruta anidada bajo
+  `AppLayout` → shell persiste; URL real con atrás del navegador). `MetricDetailPage` con cabecera
+  «‹ Hoy» + cifra-héroe + estados (loading/error/vacío/sin-desglose) y redirección si la métrica no
+  es real. Gráficas SVG hechas a mano: **barras 0–23 con pico resaltado** (pasos/energía), **banda
+  mín–máx + media** (FC), **fases apiladas por opacidad de `--m-sleep`** (sueño, sin serie horaria,
+  decisión del usuario). Tokens nuevos: ninguno (reusa `--m-*`). DESIGN.md **§12** documenta el
+  patrón. `Widget` ahora admite `to?` (`<Link>`). Revisor APTO, sin críticos; menores corregidos.
+  **+ Tooltip interactivo (2026-06-30):** las 3 gráficas muestran el valor de cada hora/fase bajo
+  demanda — **hover en desktop, tap en móvil** (hook `useHourScrubber` + `ChartTooltip`; teclado
+  ←→·Esc; cierre por tap-fuera; snap al sample real en FC; segmentos de sueño como `<button>`).
+  Responsividad a 375px cuidada (tooltip clampado, sin overflow). DESIGN.md **§12b**.
+  **+ Scrub táctil + sin selección de texto (2026-06-30):** en móvil se puede **arrastrar el dedo**
+  por la gráfica (el punto/segmento activo sigue al dedo) y **ya no se selecciona el texto / no sale
+  la lupa de iOS** (clase `.sp-chart-scrub`: `user-select:none` + `-webkit-touch-callout:none` +
+  `touch-action:pan-y`). La mecánica vive en el hook genérico compartido **`usePointerScrub(pickIndex,
+  count)`** (`useHourScrubber` = wrapper de 24; sueño = contenedor único enfocable con hit-area ~44px).
+  **Sin captura de puntero** (se quitó `setPointerCapture`, que secuestraba el scroll vertical): el
+  navegador arbitra vía `pan-y` (vertical=scroll · horizontal=scrub). Revisores: 1ª APTO c/reservas
+  (desfase X de FC y hover por `matchMedia` corregidos), 2ª (tras el fix de captura) **APTO**.
+  **✅ VALIDADO EN MÓVIL POR EL USUARIO (2026-06-30):** el arrastre (scrub), el scroll vertical y la
+  no-selección funcionan. **Falta (no bloqueante):** repaso visual en desktop + ambos temas con más
+  histórico; el resto del histórico/Tendencias sigue pendiente. **Sin commitear aún.** Detalle en
+  `log.md`/`decisiones.md`.
 - **Ingesta HORARIA (intradía) de FC, pasos y energía — HECHA, revisada (APROBADA), PENDIENTE DE
   DESPLEGAR (2026-06-30).** El normalizador (`syncBiometrics.ts`) deja de colapsar a 1 punto/día:
   cuando HAE exporta con *Time Grouping = Hour* guarda **series por hora** (`heartRate.samples`,
@@ -63,11 +126,13 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
   `DailyMetrics` más reciente (200 con `{dailyMetrics:null}` si no hay datos, no 404). El front
   elimina el mock `data.ts` y consume el endpoint con el hook `useTodayMetrics` (loading/error/
   ready + re-fetch on `visibilitychange`/`focus`). **4 cards reales** (Sueño·FC reposo·Pasos·
-  Energía) desde el sync; **HRV/SpO2/Peso** (manuales) y **Readiness/Coach/Tendencia** en estado
+  Energía) desde el sync; **HRV/SpO2/Peso** (manuales) y **Coach/Tendencia** en estado
   **«Próximamente»** (alcance acordado: «solo datos reales», el resto va a la tarea de su cálculo
-  + IA). Estado vacío global con CTA a Sincronizar; skeletons. El botón «Sincronizar» dispara el
-  deep link del Atajo de iOS (`shortcuts://run-shortcut?name=SmartPeak`). Diseño: token
-  `--m-energy` (coral, provisional) + DESIGN.md §3b/§11b. Metas/ringPct provisionales (en código).
+  + IA). **El Readiness y el resto de scores ya NO están «Próximamente»: son reales** (ver el
+  bloque de scores deterministas arriba). Estado vacío global con CTA a Sincronizar; skeletons. El
+  botón «Sincronizar» dispara el deep link del Atajo de iOS
+  (`shortcuts://run-shortcut?name=SmartPeak`). Diseño: token `--m-energy` (coral, provisional) +
+  DESIGN.md §3b/§11b. Metas/ringPct provisionales (en código).
   **Falta validación visual en navegador** (375px + desktop, ambos temas).
 - **Sincronización biométrica — pasos 1 (recepción/inspección) y 2 (PERSISTENCIA) HECHOS, revisados
   (aprobados) y DESPLEGADOS en producción.** `POST /api/sync/health` (token por usuario, header
@@ -93,17 +158,20 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## Siguiente paso (elegir)
 
-0. **Sync biométrico (recepción + persistencia + lectura en Hoy): HECHO y desplegado.** Próximos
-   sobre esta base: (a) **cálculo del Readiness** en el backend (sueño + desviación FC reposo +
-   carga; medias en JS, cache diaria §4) → al hacerlo, retirar el «Próximamente» del anillo, el
-   coach y la tendencia, y sustituir las metas/ringPct provisionales por objetivos reales del
-   perfil/rol; (b) **entrada manual** de HRV/SpO2/peso (endpoint autenticado + UI en Perfil,
-   `source:"manual"` en el mismo `DailyMetrics`) → al hacerlo, sus 3 cards dejan de ser
-   «Próximamente»; (c) **Tendencias contra datos reales** (Hoy ya consume datos reales vía
+0. **Bloque de entrada manual de HRV (3 vías) + estrés derivado — SIGUIENTE PRIORIDAD.** Activa el
+   **estrés-proxy** (hoy «Próximamente») y **completa el componente HRV del Readiness**. 3 vías de
+   ingesta: **teclado · foto (captura + IA) · Atajo de iOS** — el detalle de qué se captura y por
+   qué está en [`dispositivo.md`](dispositivo.md). El estrés se **deriva de la HRV manual** (no se
+   teclea el del anillo). Endpoint autenticado + UI en Perfil, `source:"manual"` en el mismo
+   `DailyMetrics`.
+1. **Sync biométrico + scores deterministas: HECHO y validado** (recepción + persistencia + lectura
+   en Hoy + **cálculo de Readiness/scores en el backend**, medias en JS). Lo que **queda** sobre
+   esta base: (a) **entrada manual** de SpO2/peso (además de la HRV del punto 0) → sus cards dejan
+   de ser «Próximamente»; (b) **Tendencias contra datos reales** (Hoy ya consume datos reales vía
    `GET /api/metrics/latest`; falta la pestaña Tendencias e histórico multi-día para deltas/
-   sparklines); (d) endpoint **generar/rotar token** de sync (el deep link del botón ya funciona);
-   (e) tests permanentes (mongodb-memory-server ya instalado). Subir `client_max_body_size` solo si
-   el payload supera ~1MB (hoy ~800 bytes/día, sobra margen).
+   sparklines); (c) endpoint **generar/rotar token** de sync (el deep link del botón ya funciona);
+   (d) tests permanentes (mongodb-memory-server ya instalado); (e) **Coach IA** real (regla §4).
+   Subir `client_max_body_size` solo si el payload supera ~1MB (hoy ~800 bytes/día, sobra margen).
 1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por
    escalones, añadir/quitar desde catálogo, y **persistencia del layout** `{widgetId,x,y,w,h}`
    (vía `PATCH /users/me` o endpoint nuevo). DESIGN.md §5.
@@ -128,4 +196,8 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 - **2026-06-29: realineado de diseño + dockerización commiteados en `staging`** (2 commits) y
   **mergeados a `main`** a petición del usuario. `logos/` ya trackeado. **Falta configurar el
   remoto** (no hay `origin`) para completar el push de ambas ramas.
+- **⚠️ El working tree mezcla 3 trabajos sin commitear** (todos sobre `staging`): **scores
+  biométricos** (incluye `server/src/services/scores/` **untracked**), **vista de detalle intradía**
+  y **PWA**. Al commitear hay que **separarlos por feature o incluirlos a conciencia** (no hacer un
+  `git add -A` ciego que mezcle las tres tandas en un solo commit).
 - Próxima feature: nueva rama desde `staging` (p. ej. `feat/hoy-edit`).
