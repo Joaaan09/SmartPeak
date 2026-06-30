@@ -4,6 +4,18 @@
 
 ---
 
+2026-06-30 — Decisión de producto/UX: **ubicación de la entrada manual de biometría**. Acordado con el usuario (conversación de diseño) que las vías van por **granularidad**: **teclado por dato → en el detalle de cada métrica** (`/metrica/:key`); **foto/captura (multi-métrica) → flujo central «Importar captura» como acción desde Hoy** (la IA reparte cada valor a su métrica); **Atajo iOS sin UI**; **revisión de baja confianza → aviso en Hoy**. Descartado: UI en Perfil (es configuración) y pestaña propia para capturas (la nav es para destinos, no acciones; el día a día ya es el Atajo). Fijado en `dispositivo.md` (sección «Ubicación en la UI»), `decisiones.md` (entrada nueva) y `estado.md` (corregido el antiguo «UI en Perfil»). Plan de la HRV faseado (T1 teclado → T2 hoja Hoy → T3 foto IA → T4 Atajo) dejado en `estado.md`. **Implementación aplazada por el usuario a mañana** (sin tocar código aún).
+
+---
+
+2026-06-30 — Peso corporal por sync: el usuario reportó que el peso no llegaba pese a estar en Apple Health. Diagnóstico con payload real: el Atajo **sí** exporta `weight_body_mass` (kg, `source:"Salud"`), pero el normalizador (`syncBiometrics.ts`) lo descartaba en el `default` del switch (solo 4 métricas). Corregida también la clasificación previa (el peso se trataba como "solo manual" junto a HRV/SpO2, pero a diferencia de esos el peso sí está en Salud → es sincronizable). Hecho: `case 'weight_body_mass'` (escalar/día, kg sin conversión, "última lectura del día gana") + persistencia fuera del `$set` masivo con doble `updateOne` y precedencia **«manual gana»** (el sync no pisa `metrics.weight.source:'manual'`). Decisión del usuario: el peso coexiste por 2 vías (sync + entrada manual futura). 43/43 tests (ejecutor 41 + 2 de cobertura) + revisor con 11 adversariales → APTO para staging; typecheck limpio. Solo backend, sin commitear. Falta: vía manual (endpoint+UI) + mostrar el peso en Hoy. Detalle en `decisiones.md` (2026-06-30).
+
+---
+
+2026-06-30 — Fix: la TabBar móvil "flotaba" a media altura al hacer scroll en la PWA standalone de iOS. Causa: bug de WebKit con `position: fixed` + `backdrop-filter` cuando el scroll lo hace el documento/body. Arreglo (AppLayout): patrón app-shell — el shell ocupa el viewport (`h-[100dvh]` + `overflow-hidden`) y el scroll pasa al `<main>` (`overflow-y-auto` + `overscroll-behavior-y:contain`) también en móvil (antes solo en desktop). Con el body estático, iOS recompone bien la barra fija y se conserva el blur. Sin tocar TabBar. Verificado por la ausencia de scroll-to-top/sticky (nada que romper). typecheck · lint · build en verde. Falta validación en el iPhone del usuario.
+
+---
+
 2026-06-30 — Scores biométricos deterministas: motor puro (sueño/readiness/esfuerzo/energía/estrés) + baseline + 28 tests; integrados al vuelo en GET /metrics/latest; UI de Hoy cableada (Readiness real, sueño=calidad%, energía/esfuerzo, estrés "próximamente"); DESIGN.md §14 + 2 tokens. Revisado (motor/integración/UI) y validado por el usuario. Decidido: estrés vía HRV manual; ingesta por captura+IA (3 vías) → nuevo dispositivo.md.
 
 ---

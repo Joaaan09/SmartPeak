@@ -48,6 +48,26 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **PESO CORPORAL por SYNC — HECHO, revisado (APTO para staging), SIN COMMITEAR (2026-06-30).** El
+  usuario reportó que el peso no llegaba pese a estar en Apple Health. **Diagnóstico:** el Atajo
+  **sí** exporta `weight_body_mass` (confirmado con payload real: kg, `source:"Salud"`, ~1 lectura
+  los días que se pesa) pero el normalizador lo **tiraba en el `default`** del switch (solo soportaba
+  4 métricas). **Clasificación previa errónea corregida:** el peso NO es como HRV/SpO2 (que el anillo
+  no vuelca a Salud) — el peso **sí** está en Apple Health, es sincronizable. **Hecho:** `case
+  'weight_body_mass'` en `syncBiometrics.ts` (escalar/día, kg sin conversión, «última lectura del día
+  gana») + persistencia **fuera** del `$set` masivo con **doble `updateOne`** y precedencia
+  **«manual gana»** (el sync no pisa `metrics.weight.source:'manual'`). Modelo: comentario de
+  `weight` actualizado (ya no es solo-manual). **43/43 tests** (ejecutor 41 + 2 de cobertura) +
+  revisor con **11 adversariales** → **APTO**; typecheck limpio. **Decidido** (en `decisiones.md`,
+  2026-06-30): el peso **coexiste por 2 vías** (sync + entrada manual futura). **Falta (otra tanda):**
+  vía manual (endpoint + UI) y mostrar el peso en `Hoy` (hoy «Próximamente»). Limitación menor
+  conocida: desempate por TZ lexicográfico (irrelevante en uso real). **Solo backend, sin commitear.**
+- **FIX TabBar móvil que "flotaba" a media altura al scrollear en la PWA standalone de iOS
+  (2026-06-30).** Causa: bug de WebKit `position: fixed` + `backdrop-filter` con **scroll del
+  body**. Arreglo en `AppLayout`: patrón **app-shell** (shell = `h-[100dvh]` + `overflow-hidden`;
+  scroll movido a `<main>` con `overflow-y-auto` + `overscroll-behavior-y:contain`) también en
+  móvil, no solo desktop. **TabBar sin tocar** → se conserva el blur. typecheck · lint · build en
+  verde. Ver `decisiones.md`/`log.md`. **Falta:** que el usuario lo confirme en su iPhone.
 - **SCORES BIOMÉTRICOS DETERMINISTAS — HECHOS, revisados (3 pasos APROBADOS) y ✅ VALIDADOS
   VISUALMENTE POR EL USUARIO (2026-06-30).** Motor de cálculo **puro** en
   `server/src/services/scores/` (5 scores: **Calidad de sueño · Preparación/Readiness ·
@@ -162,8 +182,23 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
    **estrés-proxy** (hoy «Próximamente») y **completa el componente HRV del Readiness**. 3 vías de
    ingesta: **teclado · foto (captura + IA) · Atajo de iOS** — el detalle de qué se captura y por
    qué está en [`dispositivo.md`](dispositivo.md). El estrés se **deriva de la HRV manual** (no se
-   teclea el del anillo). Endpoint autenticado + UI en Perfil, `source:"manual"` en el mismo
-   `DailyMetrics`.
+   teclea el del anillo). Endpoint autenticado + `source:"manual"` en el mismo `DailyMetrics`.
+   **Ubicación de la UI (decidida 2026-06-30):** teclado en el **detalle de cada métrica**; foto =
+   flujo central «Importar captura» desde **Hoy** (no en Perfil, no pestaña propia) — ver
+   `dispositivo.md` (Ubicación en la UI) y `decisiones.md`.
+   **Plan faseado (acordado 2026-06-30; implementación APLAZADA por el usuario a «mañana»):**
+   **T1 — HRV por teclado, de punta a punta** (la siguiente): endpoint manual genérico `PATCH
+   /api/metrics/manual` `{date?, hrv?, spo2?, weight?}` (JWT, `source:'manual'`, **merge por campo**
+   como el sync, sin pisar lo del Atajo) + tests; **verificar/cablear** que el motor de `scores/`
+   consume `metrics.hrv` (activa el componente HRV del Readiness + el estrés derivado); front: la
+   card HRV deja de ser `soon` → clickable a `/metrica/hrv`, y `MetricDetailPage` gana el caso HRV
+   (cifra/vacío con CTA + form de teclado). **T2** — hoja «Añadir datos de hoy» en Hoy (teclado
+   multi-campo) + SpO₂. **T3** — flujo «Importar desde captura» (IA visión) + revisión por confianza
+   (requiere decidir el modelo de IA con visión). **T4** — Atajo de iOS (`/api/ingest/capturas`,
+   `x-sync-token`). **Default**: la HRV que se teclea = «variabilidad media durante el sueño»
+   (rMSSD, ms), no una diurna puntual. **Nota peso**: ya llega por **sync** (no urge la vía manual
+   de peso; el endpoint la admite igual, con precedencia «manual gana»). Implementar con el
+   **harness** (explorador → ejecutor backend → ejecutor front → revisor).
 1. **Sync biométrico + scores deterministas: HECHO y validado** (recepción + persistencia + lectura
    en Hoy + **cálculo de Readiness/scores en el backend**, medias en JS). Lo que **queda** sobre
    esta base: (a) **entrada manual** de SpO2/peso (además de la HRV del punto 0) → sus cards dejan

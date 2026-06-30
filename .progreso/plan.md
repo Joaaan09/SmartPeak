@@ -41,6 +41,10 @@
   persistir); Hoy muestra Readiness real, sueño=calidad %, energía/esfuerzo y estrés «Próximamente».
   DESIGN.md §14 + 2 tokens (`--m-energylvl`, `--m-strain`). Revisado (motor/integración/UI) y validado
   por el usuario.
+- [x] **Peso corporal por sync** — el Atajo ya exportaba `weight_body_mass` (kg, `source:"Salud"`);
+  añadido al normalizador (escalar/día, «última lectura gana») con precedencia **«manual gana»** para
+  coexistir con la entrada manual futura. 43/43 tests, revisor APTO, sin commitear. **Falta:** vía
+  manual (endpoint + UI) + mostrar el peso en `Hoy` (hoy «Próximamente»). (2026-06-30)
 - [ ] **Bloque de entrada manual de HRV (3 vías: teclado / foto / Atajo de iOS) + estrés derivado** —
   activa el estrés-proxy real y completa el componente HRV del Readiness. Ver
   [dispositivo.md](dispositivo.md) (ingesta por captura + IA de lo no exportado por el anillo).

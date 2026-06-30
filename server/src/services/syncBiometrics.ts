@@ -4,7 +4,9 @@ import type { SyncPayload } from '../validation/sync.schema.js';
 // Ingesta de biometría del Atajo de iOS (Health Auto Export v2).
 // Parsea el payload heterogéneo, normaliza por métrica y upserta un documento
 // diario por (userId, date) MERGEANDO solo las métricas presentes, sin pisar
-// campos manuales (hrv/spo2/weight) ni readiness ni otras métricas del día.
+// readiness ni otras métricas del día. El peso (weight_body_mass) SÍ entra por
+// sync, pero con precedencia "manual gana" (no pisa un peso de origen manual);
+// los demás campos manuales (hrv/spo2) siguen sin tocarse.
 
 // Muestras intradía (una por hora). `t` es la hora local "HH:00".
 interface HeartRateSample {
@@ -50,6 +52,10 @@ interface NormalizedActiveEnergy {
   source?: string;
   hourly?: ActiveEnergyHour[];
 }
+interface NormalizedWeight {
+  kg?: number;
+  source?: string;
+}
 
 // Acumuladores por día: recogen todos los puntos horarios antes de agregar.
 // Mapa hora ("HH:00") -> muestra, para colapsar horas repetidas de forma
@@ -72,6 +78,13 @@ interface DayAccumulator {
     mins: number[]; // todos los Min del día (con y sin hora) para el agregado
     maxs: number[];
     avgs: number[];
+  };
+  weight?: {
+    // El peso es un ESCALAR por día (no horario ni aditivo). Si hay varias
+    // lecturas el mismo día, nos quedamos con la ÚLTIMA (la de hora más tardía).
+    kg: number;
+    source?: string;
+    raw: string; // `date` crudo de la lectura elegida, para comparar "más reciente"
   };
 }
 
@@ -236,6 +249,20 @@ export async function ingestHealthPayload(
           break;
         }
 
+        case 'weight_body_mass': {
+          // Peso corporal: escalar por día en kg (no se convierte, no es aditivo).
+          const kg = num(point, 'qty', 'Qty');
+          if (kg === undefined) break;
+          const raw = str(point, 'date');
+          if (!raw) break; // sin marca temporal no podemos resolver "el más reciente"
+          // Nos quedamos con la lectura de hora más tardía del día (comparación
+          // lexicográfica del `date` crudo: comparten formato "YYYY-MM-DD HH:mm:ss").
+          if (!acc.weight || raw >= acc.weight.raw) {
+            acc.weight = { kg, source, raw };
+          }
+          break;
+        }
+
         default:
           // name desconocido: ignorar sin romper.
           break;
@@ -309,18 +336,53 @@ export async function ingestHealthPayload(
       present.push('heartRate');
     }
 
-    if (present.length === 0) continue;
+    // El peso NO va en el $set masivo: tiene precedencia "manual gana" y se
+    // persiste aparte con un filtro condicional (ver bloque tras el upsert).
+    const hasWeight = acc.weight !== undefined;
+
+    if (present.length === 0 && !hasWeight) continue;
 
     // Upsert idempotente por día: $set dinámico SOLO con las métricas presentes.
     // Cada métrica se REEMPLAZA por completo (incluida su serie), de modo que
     // reenviar el mismo día actualiza las horas sin duplicarlas ni acumular.
-    // No tocamos campos manuales (hrv/spo2/weight) ni readiness ni métricas
-    // ausentes en este payload.
-    await DailyMetrics.updateOne(
-      { userId, date },
-      { $set: set, $setOnInsert: { userId, date } },
-      { upsert: true },
-    );
+    // No tocamos campos manuales (hrv/spo2) ni readiness ni métricas ausentes en
+    // este payload. El peso se persiste aparte (ver bloque siguiente).
+    if (present.length > 0) {
+      await DailyMetrics.updateOne(
+        { userId, date },
+        { $set: set, $setOnInsert: { userId, date } },
+        { upsert: true },
+      );
+    }
+
+    // Peso: precedencia "manual gana". Convención de `source`:
+    //   - sync   -> string crudo de HAE (p. ej. "Salud", "KSIX Ring").
+    //   - manual -> el literal 'manual' (lo escribirá la entrada manual, otra tanda).
+    // El sync solo escribe el peso si el día NO tiene ya un peso manual.
+    // No usamos upsert con filtro sobre `metrics.weight.source` porque, si el día
+    // tuviera peso manual, el filtro no casaría y el upsert intentaría INSERTAR un
+    // doc duplicado (choque con el índice único userId+date). En su lugar:
+    //   1) intentamos actualizar el doc del día si NO tiene peso manual;
+    //   2) si no se actualizó nada Y el día no existe, lo creamos (upsert separado).
+    // Idempotente: reenviar el mismo peso de sync reescribe el mismo valor; un peso
+    // manual preexistente nunca se pisa.
+    if (acc.weight) {
+      const weight: NormalizedWeight = { kg: round1(acc.weight.kg), source: acc.weight.source };
+      const res = await DailyMetrics.updateOne(
+        { userId, date, 'metrics.weight.source': { $ne: 'manual' } },
+        { $set: { 'metrics.weight': weight } },
+      );
+      // matchedCount 0 => o no existe el día, o existe con peso manual.
+      // Solo creamos el día si NO existe (un día con peso manual no se toca).
+      if (res.matchedCount === 0) {
+        await DailyMetrics.updateOne(
+          { userId, date },
+          { $setOnInsert: { userId, date, 'metrics.weight': weight } },
+          { upsert: true },
+        );
+      }
+      present.push('weight');
+    }
 
     metricsByDay[date] = present;
   }

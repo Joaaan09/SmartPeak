@@ -80,6 +80,16 @@ export function hourlyPayloadDay2406(): SyncPayload {
             },
           ],
         },
+        {
+          // Peso corporal: escalar por día en kg. DOS lecturas el mismo día;
+          // el normalizador debe quedarse con la ÚLTIMA (la de las 19:00 -> 83.9).
+          name: 'weight_body_mass',
+          units: 'kg',
+          data: [
+            { date: '2026-06-24 07:00:00 +0200', qty: 83.6, source: 'Salud' },
+            { date: '2026-06-24 19:00:00 +0200', qty: 83.9, source: 'Salud' },
+          ],
+        },
       ],
     },
   };
