@@ -35,6 +35,28 @@ export function SyncIcon(props: IconProps) {
   );
 }
 
+/** Instalar / descargar → flecha hacia abajo sobre una bandeja. */
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12" />
+      <path d="M8 11l4 4 4-4" />
+      <path d="M4 19h16" />
+    </svg>
+  );
+}
+
+/** Compartir (iOS) → cuadro con flecha saliendo hacia arriba. */
+export function ShareIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12" />
+      <path d="M8 7l4-4 4 4" />
+      <path d="M6 12H5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-1" />
+    </svg>
+  );
+}
+
 // --- Iconos de navegación (regleta + tab bar, DESIGN.md §6) ---
 
 /** Hoy → dot relleno (●, "ahora / en directo"). Es su icono, no el marcador de activo. */

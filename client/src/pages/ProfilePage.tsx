@@ -5,6 +5,7 @@ import { ROLE_LABELS } from '../auth/types';
 import { useTheme } from '../theme/useTheme';
 import { Button } from '../components/ui/Button';
 import { MoonIcon } from '../components/icons';
+import { InstallApp } from '../features/pwa/InstallApp';
 import { PlaceholderPage } from '../features/placeholder/PlaceholderPage';
 
 // Pestaña Perfil (rol, tema, sincronización). En esta iteración es mínima:
@@ -64,6 +65,10 @@ export function ProfilePage() {
             </Button>
           </div>
         </section>
+
+        {/* Instalación PWA (Añadir a pantalla de inicio). Se auto-oculta si la
+            app ya está instalada o el navegador no lo soporta. */}
+        <InstallApp />
 
         <section className="mt-[28px] border-t border-line pt-[20px]">
           <Button
