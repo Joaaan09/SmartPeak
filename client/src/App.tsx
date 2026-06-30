@@ -5,6 +5,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 import { PublicOnlyRoute } from './auth/PublicOnlyRoute';
 import { AppLayout } from './layout/AppLayout';
 import { TodayPage } from './features/today/TodayPage';
+import { MetricDetailPage } from './features/today/detail/MetricDetailPage';
 import { TrendsPage } from './pages/TrendsPage';
 import { TrainingPage } from './pages/TrainingPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -31,6 +32,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<TodayPage />} />
+                <Route path="/metrica/:metricKey" element={<MetricDetailPage />} />
                 <Route path="/tendencias" element={<TrendsPage />} />
                 <Route path="/entreno" element={<TrainingPage />} />
                 <Route path="/perfil" element={<ProfilePage />} />

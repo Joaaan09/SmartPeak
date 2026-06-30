@@ -40,15 +40,15 @@ Estas reglas existen para evitar el look genérico de IA. No las rompas sin actu
 - ❌ **Nada de `outline:none`** sin un `:focus-visible` de reemplazo (§11).
 
 ### Vetos sobre las skills de diseño (qué NO adoptar de ellas)
-Las skills instaladas (`emil-design-eng`, `review-animations`, `impeccable`,
-`design-taste-frontend`) son **guía de craft, no autoridad**: ante conflicto **manda este doc**.
+Las skills instaladas (`emil-design-eng`, `review-animations`, `design-taste-frontend`) son
+**guía de craft, no autoridad**: ante conflicto **manda este doc**.
 No adoptes de ellas:
 - ❌ Subir los *dials* de variance / "toma un riesgo estético audaz" / asimetría artsy
   (taste-skill por defecto 8/6/4) → SmartPeak es **calmado**: variance baja, motion bajo.
 - ❌ Fuentes display "con personalidad" inventadas a capricho → la tipografía está **fijada por
   la marca/landing**: **Space Grotesk** (UI) + **Space Mono** (datos y eyebrows). No se cambian
   por gusto; la del sistema es solo *fallback* (§2).
-- ❌ El ban del *hero-metric* de `impeccable` → aquí **el dato es el héroe** (§1); mostramos
+- ❌ El ban del *hero-metric* (que desaconsejan algunas skills) → aquí **el dato es el héroe** (§1); mostramos
   **datos reales** del usuario, no cifras decorativas. Solo evitamos el cliché SaaS (número
   grande + gradiente + stats inventadas).
 - ❌ La arquitectura de **landing/marketing** de taste-skill (heroes, marquees, scroll-hijack,
@@ -302,7 +302,7 @@ en Space Grotesk, plan del día y chips de datos en Space Mono (carga, HRV 7d, r
 
 ## 8. Movimiento
 
-Catálogo derivado de las skills de motion (Emil Kowalski + `impeccable/animate`). Regla madre:
+Catálogo derivado de las skills de motion (Emil Kowalski). Regla madre:
 **toda animación necesita un propósito** declarable en una frase (feedback, cambio de estado,
 jerarquía o transición). Si no lo tiene, **bórrala** — la calma premium se rompe con motion
 decorativo. `review-animations` es la rúbrica de revisión.
@@ -403,7 +403,7 @@ No es opcional ni "para luego".
 
 ---
 
-## 11. Interacción y estados (de `impeccable` + `design-taste-frontend`)
+## 11. Interacción y estados (de `design-taste-frontend`)
 
 - **8 estados por elemento interactivo:** `default · hover · focus-visible · active · disabled ·
   loading · error · success`. No diseñes solo el estado feliz.
@@ -445,3 +445,169 @@ para no romper el bento); lo que cambia es el contenido del dato.
 - **Estado vacío global** (`dailyMetrics: null`, aún no se sincronizó nada): además de las cards
   en "sin dato", muestra una llamada a la acción sobria que **apunta al botón Sincronizar**
   (texto tipo "Aún no hay datos — pulsa Sincronizar"). Monocromo, sin ilustración recargada.
+
+---
+
+## 12. Vista de detalle de métrica (desglose intradía) — añadido 2026-06-30
+
+Al pulsar una card de métrica con dato en `Hoy` se abre su **vista de detalle**: el desglose de
+esa métrica (intradía por horas, o por fases en el caso del sueño).
+
+### Patrón de navegación
+- **Push a pantalla completa DENTRO del shell**: vive en su propia ruta (`/metrica/:metricKey`)
+  anidada bajo `AppLayout`, así la **regleta (desktop) y la tab bar (móvil) permanecen** (como
+  Apple Salud). No es modal ni bottom-sheet.
+- **Cabecera propia** (no el `AppHeader` de pestaña): botón **«‹ Hoy»** que vuelve a `Hoy`
+  (navegable por teclado, target ≥44px) + **eyebrow técnico** con el nombre de la métrica
+  (`.eyebrow`, p. ej. `PASOS · HOY`). Debajo, la **cifra-héroe** del día en mono `tabular-nums`.
+- El **atrás del navegador** también cierra la vista (es una URL real).
+
+### Cards clickables (extiende §11)
+- Solo la card en estado **`data`** es interactiva; se renderiza como **`<a>`** (un control que
+  navega es `<a>`, §10) hacia `/metrica/:key`. `empty`/`soon` **no** son interactivas.
+- Estados: **hover** = realce sutil (borde `--line-strong` / superficie `--surface-2`), **solo**
+  bajo `@media (hover: hover) and (pointer: fine)`; **`:active`** `scale(0.97)`; **`:focus-visible`**
+  outline con `--accent`. El chrome sigue **monocromo**; el color sigue solo en el dato.
+
+### Gráficas del desglose
+SVG **hecho a mano** (como `TrendWidget`, no librería), `preserveAspectRatio:none`, color = el
+`--m-*` de la métrica, **cifras y ejes en mono `tabular-nums`**. Equivalente textual siempre en el
+DOM (cifra + stats, no solo el SVG). Tipos:
+- **Acumulativas (pasos · energía)** → **barras por hora**. Eje 00–23 con pocos ticks; una hora
+  sin dato se ve (barra a 0). Se **resalta el pico** del día.
+- **FC** → **banda mín–máx** (área en `--m-rhr` a baja opacidad) + **línea de media**. Reposo = mín.
+- **Sueño (sin serie horaria)** → **barra de fases apilada** (profundo/REM/ligero/despierto)
+  proporcional a la duración, fases diferenciadas por **opacidad de `--m-sleep`** (despierto en
+  `--ring-track`/`--text-faint`) + lista de fases (duración + %) + fila `inicio → fin`.
+- Relleno de área degradado permitido en su `--m-*` (§7b). Sin gradientes en el chrome.
+
+### Estados y motion (§11/§11b/§8)
+- **Cargando** → skeleton que respeta la forma (cifra + bloque de gráfica), nunca spinner.
+- **Sin serie** (métrica real pero el sync no trajo intradía ese día) → mensaje sobrio
+  «sin desglose disponible» conservando la cabecera; **vacío global** si `dailyMetrics:null`.
+- **Métrica no real** en la URL (HRV/SpO₂/Peso/`soon` o param inválido) → redirige a `/`.
+- **Entrada**: barras/línea aparecen con `--ease-out` (transform/opacity), <800ms; **respeta
+  `prefers-reduced-motion`** (sin movimiento, resultado final visible).
+
+### 12b. Tooltip interactivo de las gráficas (hover desktop · tap móvil) — añadido 2026-06-30
+Las gráficas del desglose exponen el valor de cada punto **bajo demanda** (no se rotulan todos los
+valores, para no saturar):
+- **Puntero fino (desktop)**: al **hover** sobre la gráfica, un tooltip sigue la hora/segmento bajo
+  el cursor y muestra su valor; se oculta al salir (`@media (hover: hover) and (pointer: fine)`).
+- **Táctil (móvil) — scrub**: **tocar o ARRASTRAR** el dedo por la gráfica mueve el punto/segmento
+  activo y su tooltip, que **siguen al dedo** (la guía/punto va detrás del gesto). Al **levantar el
+  dedo** el tooltip **se mantiene** visible (para leer el valor); **tap fuera** de la gráfica lo
+  cierra. No hay hover en táctil → la pulsación/arrastre es el gesto. Implementación: el scrub **NO
+  captura el puntero** (sin `setPointerCapture`), de modo que `touch-action: pan-y` **arbitra** el
+  gesto — un arrastre **horizontal** recorre la gráfica (scrub) y un arrastre **vertical** (aunque
+  empiece sobre la gráfica) hace **scroll de la página**. `pointerdown` fija el punto (feedback de tap
+  inmediato), `pointermove` con el dedo abajo lo sigue, `pointerup` lo deja visible; cuando el
+  navegador decide quedarse el gesto para hacer scroll vertical dispara `pointercancel`, que **oculta
+  el tooltip** que hubiera aparecido. No hay "toggle-off" al tocar el mismo punto (chocaría con el
+  arrastre); el descarte es por tap-fuera o moviéndose a otro punto. Mecánica compartida en el hook
+  genérico `usePointerScrub` (`useHourScrubber` es un wrapper fino sobre 24 horas).
+- **Sin selección de texto/callout**: las zonas interactivas de las gráficas desactivan la selección
+  de iOS/Safari con `user-select:none` (+ `-webkit-user-select`) y `-webkit-touch-callout:none` (mata
+  la lupa/menú al mantener pulsado), y usan `touch-action: pan-y` para que el **scroll vertical de la
+  página** siga funcionando aunque el gesto empiece sobre la gráfica (el gesto horizontal es el
+  scrub; al no capturar el puntero, `pan-y` puede arbitrar). Utilidad reutilizable `.sp-chart-scrub`
+  (las tres gráficas la usan: barras, FC y la barra de fases del sueño).
+- **Tooltip**: burbuja elevada (`--surface-2`, borde `--line`, `--shadow`) con la hora/label en mono
+  y el valor en mono coloreado con el `--m-*` de la métrica. **Se mantiene dentro de los límites de
+  la gráfica** (clamp horizontal; nunca se sale del viewport a 375px). El punto/barra/segmento activo
+  se resalta (opacidad plena / guía vertical).
+- **Motion (§8)**: aparición fade + `scale(0.96→1)` <200ms `--ease-out`; respeta
+  `prefers-reduced-motion` (aparece sin transform).
+- **A11y (§10)**: es **mejora progresiva** — el equivalente textual ya vive en el DOM (cifra-héroe +
+  `DetailStats` + `aria-label` del `role="img"`). Donde sea barato, la gráfica es enfocable y las
+  flechas mueven el punto activo; el sueño usa **un único contenedor enfocable** (`role="img"`,
+  `tabIndex=0`) sobre la barra de fases (sin `<button>` por fase) que gobierna hover/tap/arrastre/
+  teclado vía `usePointerScrub`, con un **hit-area táctil cómodo (~44px)** mediante padding vertical
+  transparente sin mover visualmente la barra de 16px; la lista textual de fases (duración + %) es el
+  equivalente accesible.
+- **Responsividad**: la vista de detalle y sus gráficas se construyen mobile-first; sin scroll
+  horizontal a 375px, tooltips clampados, labels de eje legibles y targets táctiles cómodos.
+
+---
+
+## 13. Instalación / Añadir a pantalla de inicio (PWA) — añadido 2026-06-30
+
+Vive en **Perfil**, como una `<section>` más (mismo patrón de header/eyebrow). Es **monocromo**:
+no hay datos, así que **sin color** (tinta/papel). Bifurca por plataforma (`features/pwa`):
+- **Android/Chromium** → botón `ghost` "Instalar app" que dispara el **prompt nativo**
+  (`beforeinstallprompt` diferido, un solo uso).
+- **iOS Safari** (sin prompt) → guía manual en un **`<details>` semántico** (disclosure accesible
+  por teclado, sin JS): Compartir → Añadir a pantalla de inicio → Añadir. El `<summary>` se estiliza
+  como control (foco visible, sin el marcador feo); los pasos aparecen con un fundido sutil
+  (opacity/transform, §8) que `prefers-reduced-motion` neutraliza.
+- **Ya instalada (standalone)** o **navegador sin soporte** → la sección **no se renderiza**.
+
+---
+
+## 14. Scores derivados en Hoy (interpretación biométrica) — añadido 2026-06-30
+
+Además de los datos **crudos** (FC reposo, pasos, energía activa en kcal), `Hoy` muestra los
+**scores derivados** que el backend calcula al vuelo (`GET /api/metrics/latest` → `scores`). Son
+cinco, todos **0–100**, y traducen la biometría a una lectura accionable:
+
+| Score | Token | Card en `Hoy` | Detalle intradía |
+|---|---|---|---|
+| **Preparación** (Readiness) | por estado (§7) | widget firma (anillo) | no |
+| **Calidad de sueño** | `--m-sleep` | card de Sueño (anillo = calidad) | sí (fases) |
+| **Nivel de energía** | `--m-energylvl` | card propia | **no** |
+| **Esfuerzo** (Strain) | `--m-strain` | card propia | **no** |
+| **Estrés** | — (`--text-faint`) | "Próximamente" (`requiere HRV`) | no |
+
+### Regla de color (clave): valencia vs. neutralidad
+- **Preparación** (y el futuro **Estrés**) tienen **valencia buena/mala** → se pintan **por
+  estado** con el **semáforo** `--pos`/`--warn`/`--neg` (como el anillo de Readiness, §7). El
+  color ya dice "cómo estás".
+- **Calidad de sueño, Nivel de energía y Esfuerzo** se pintan con su **token `--m-*` propio** y el
+  **estado va en el caption** (texto, no color). Motivo: el **esfuerzo es neutro** — un día de
+  mucha carga **no es "malo"** (pintarlo en rojo mentiría); cada métrica conserva su color (§3).
+
+### Cards
+- **Sueño** (`--m-sleep`, navegable): el **anillo representa la calidad (0–100%)**; el dato
+  principal es la calidad en `%` y las **horas pasan a sub-dato** del caption
+  (`"<estado> · <horas>"`, p. ej. `Bueno · 7h 12m`). Sin score de calidad, cae al
+  comportamiento previo (horas crudas) o a "sin dato".
+- **Nivel de energía** (`--m-energylvl`, **no navegable**): score + estado (Bajo/Medio/Alto) en el
+  caption. Sin score → la card **no se muestra** (no se inventa un vacío).
+- **Esfuerzo** (`--m-strain`, **no navegable**): score + estado (Bajo/Moderado/Alto) en el caption.
+  Sin score → no se muestra.
+- **Estrés**: card en estado **"Próximamente"** con el motivo concreto **"requiere HRV"** (el
+  estrés se infiere del HRV, aún sin entrada manual). Usa el patrón `soon` de §11b con un
+  `reason` específico en lugar del copy genérico.
+
+### Badge de confianza (cold-start)
+Preparación expone la **confianza** del cálculo. En `confidence === 'low'` (pocos días de
+histórico) **NO se finge precisión**: el subtítulo del widget lo avisa
+(`Confianza baja · pocos días de histórico`); `medium` → `Confianza media`; `high` → subtítulo
+útil. Se reutiliza el slot `sub` del widget (§7), sin rediseñarlo.
+
+### Tokens nuevos (provisionales, como el resto de `--m-*`, §3b)
+```
+                 dark / tinta   light / papel   métrica
+--m-energylvl     #32D6E0        #0E95A0         Nivel de energía — cian/turquesa
+--m-strain        #C46BFF        #8E3FD6         Esfuerzo — violeta/magenta
+```
+Hues **separados** de los existentes (rdy azul · hrv teal · rhr rosa · sleep índigo · steps
+naranja · weight oro · energy coral) y de las señales `--pos`/`--warn`/`--neg`: `--m-energylvl` es
+un **cian más azulado y brillante** que el teal verdoso del HRV; `--m-strain` es un
+**violeta-magenta** más rojizo que el índigo azulado del sueño. Papel usa variantes más profundas
+(contraste sobre blanco). El `--m-energy` (coral) actual se queda para la **energía activa cruda**
+en kcal — no es lo mismo que el nivel de energía interpretado.
+
+### Mapa estado → texto (captions, español)
+```
+sleepQuality   excellent→Excelente · good→Bueno · fair→Regular · poor→Malo
+energyLevel    low→Bajo · medium→Medio · high→Alto
+strain         low→Bajo · moderate→Moderado · high→Alto
+readiness      recovered→Recuperado · moderate→Moderado · fatigue→Fatiga (label del anillo, §7)
+```
+
+### Disposición en el bento (§5)
+Orden de lectura: **HERO** (Preparación + Coach) → **scores interpretados** (Sueño · Nivel de
+energía · Esfuerzo) → **crudos** (FC reposo · Pasos · Energía activa) → **Próximamente** (Estrés ·
+Tendencia) → **manuales** (HRV · SpO₂ · Peso). El grid es `auto-flow:dense`; se respetan los spans
+actuales (scores y crudos en span 3, Readiness 5×2, Coach 4×2, Tendencia span 8).

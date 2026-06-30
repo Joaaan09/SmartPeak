@@ -43,6 +43,8 @@
   --m-steps: #ff9f0a; /* pasos — naranja (actividad) */
   --m-weight: #e5b83c; /* peso — oro */
   --m-energy: #ff7847; /* energía activa — coral (quema; ≠ ámbar de pasos y ≠ rojo de --neg) */
+  --m-energylvl: #32d6e0; /* nivel de energía — cian/turquesa (vitalidad; ≠ teal hrv más verdoso) */
+  --m-strain: #c46bff; /* esfuerzo — violeta/magenta (carga; ≠ índigo sleep más azul) */
 
   --ring-track: #20232a;
 
@@ -89,6 +91,8 @@ body.paper {
   --m-steps: #c2700a; /* naranja/ámbar */
   --m-weight: #9c7a1a; /* oro/bronce */
   --m-energy: #cc5526; /* coral (variante profunda para contraste sobre blanco) */
+  --m-energylvl: #0e95a0; /* cian/turquesa (variante profunda para contraste sobre blanco) */
+  --m-strain: #8e3fd6; /* violeta/magenta (variante profunda para contraste sobre blanco) */
   --ring-track: #e6e6e1;
   --hi: transparent;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 22px rgba(0, 0, 0, 0.05);

@@ -50,6 +50,21 @@
     font-weight: 700;
     color: var(--text-muted);
   }
+
+  /* Zona interactiva de las gráficas del desglose intradía (DESIGN.md §12b).
+     Soporta el "scrub" táctil: tocar o ARRASTRAR el dedo mueve el punto activo.
+     - touch-action: pan-y → el gesto VERTICAL sigue siendo scroll de la página;
+       el horizontal lo seguimos nosotros (scrub) sin capturar el puntero, así el
+       scroll de la página nunca se atrapa (el navegador arbitra el gesto).
+     - user-select:none (+ -webkit-) → mantener pulsado no selecciona texto.
+     - -webkit-touch-callout:none → mata el menú/lupa de selección de iOS.
+     user-select se hereda, así que labels de eje y tooltip quedan sin selección. */
+  .sp-chart-scrub {
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 /* ============================================================================
@@ -138,6 +153,43 @@ button:focus:not(:focus-visible) {
   animation: skel-pulse 1.4s var(--ease-in-out) infinite;
 }
 
+/* Desglose intradía (DESIGN.md §12) — entrada sutil de barras/línea/segmentos.
+   Solo transform/opacity, --ease-out, <800ms; stagger opcional vía --i (índice
+   del elemento). Reduced-motion lo apaga (resultado final visible). */
+@keyframes chart-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sp-chart-in {
+  animation: chart-in 0.5s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 18ms);
+}
+
+/* Tooltip interactivo de las gráficas (DESIGN.md §12b) — burbuja bajo demanda
+   (hover desktop / tap móvil). Aparición fade + scale(0.96→1) <200ms, --ease-out.
+   Solo transform/opacity. Reduced-motion lo apaga (aparece sin transform). */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.sp-tooltip-in {
+  animation: tooltip-in 0.18s var(--ease-out) both;
+  /* El origen de la escala arranca abajo (la burbuja "crece" hacia arriba). */
+  transform-origin: center bottom;
+}
+
 /* Coach IA — MONOCROMO (decisión 2026-06-29, como la landing). Sin gradiente.
    El LED del badge es un punto neutro que respira lentamente (≈2.6s) para
    señalar "vivo/inteligente" sin teñir la app. Reduced-motion lo detiene. */
@@ -152,6 +204,33 @@ button:focus:not(:focus-visible) {
 }
 .sp-led {
   animation: pulse-led 2.6s var(--ease-in-out) infinite;
+}
+
+/* ============================================================================
+   Guía de instalación PWA en iOS (features/pwa/InstallApp). El <details> es un
+   disclosure nativo (accesible por teclado, sin JS). Quitamos el marcador feo
+   por defecto y damos al <summary> aspecto de control. El reveal de los pasos es
+   un fundido sutil (solo opacity/transform, §8); reduced-motion lo neutraliza
+   con la regla global de transición de más abajo.
+   ============================================================================ */
+.install-summary {
+  list-style: none;
+}
+.install-summary::-webkit-details-marker {
+  display: none;
+}
+@keyframes install-steps-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.install-details[open] .install-steps {
+  animation: install-steps-in 160ms var(--ease-out) both;
 }
 
 /* ============================================================================
@@ -172,6 +251,18 @@ button:focus:not(:focus-visible) {
   }
   /* Skeleton: deja de pulsar (mantiene el bloque visible). */
   .sp-skel {
+    animation: none;
+  }
+  /* Gráficas del desglose: aparecen sin desplazarse ni escalonarse. */
+  .sp-chart-in {
+    animation: none;
+  }
+  /* Tooltip: aparece sin transform (queda visible, no se elimina). */
+  .sp-tooltip-in {
+    animation: none;
+  }
+  /* Guía de instalación iOS: los pasos aparecen sin desplazarse. */
+  .install-details[open] .install-steps {
     animation: none;
   }
   *,

@@ -84,8 +84,9 @@ Resumen mínimo (el detalle está en DESIGN.md):
 Si algo visual no está en DESIGN.md: **decídelo y añádelo a DESIGN.md primero**, luego implementa.
 
 **Skills de diseño (criterio de craft).** En tareas de UI sigue las directrices de las skills
-de diseño instaladas — `emil-design-eng`, `review-animations`, `impeccable` y
-`design-taste-frontend` — especialmente para **motion/animación, interacción y pulido**. Son
+de diseño instaladas — `emil-design-eng`, `review-animations` y `design-taste-frontend`
+(viven en `.claude/skills/`, dentro del repo) — especialmente para **motion/animación,
+interacción y pulido**. (`impeccable` se descartó: ver [.progreso/decisiones.md](.progreso/decisiones.md).) Son
 **guía, no autoridad**: ante cualquier conflicto **manda DESIGN.md** (ver vetos en DESIGN.md §0
 y la decisión en [.progreso/decisiones.md](.progreso/decisiones.md)). Lo común a todas ya está
 integrado en DESIGN.md (§8 motion, §11 interacción); úsalas para profundizar, no para
@@ -137,6 +138,21 @@ Eres el ORQUESTADOR. Tu trabajo es coordinar, no ejecutar el trabajo pesado.
      regístralo en `.progreso/decisiones.md`.
 5. Al cerrar: SOBRESCRIBE `.progreso/estado.md` con la foto actual y AÑADE
    una línea fechada a `.progreso/log.md`.
+
+### Cuándo saltar el harness (subagentes)
+Desplegar los subagentes (explorador / ejecutor / revisor) **no siempre es necesario**.
+Cuando la tarea sea sencilla o poco compleja —o creas que no hace falta dividirla— puedes
+hacerla tú mismo de forma directa, sin orquestar subagentes.
+
+- **No decidas saltártelo por tu cuenta: pregúntamelo primero.** Di algo como "creo que
+  esta tarea es sencilla y no hace falta el harness multiagente, ¿me lo salto o lo uso?" y
+  espera mi respuesta antes de proceder.
+- **Lo que NUNCA se salta es la carpeta [.progreso/](.progreso/)**: leerla al empezar y
+  mantenerla al día (estado / plan / decisiones / log) es obligatorio siempre, uses o no
+  subagentes. Lo opcional es el despliegue de subagentes, no el seguimiento del progreso.
+- **Saltar el harness solo afecta al despliegue de subagentes.** No exime de [DESIGN.md](DESIGN.md),
+  de las skills de diseño en tareas de UI, ni del checklist final de UI (§5): si me salto al
+  revisor, esa verificación de calidad/diseño la asumo yo.
 
 ### Reglas
 - No acumules contexto innecesario: si una tarea requiere leer mucho, va al explorador.

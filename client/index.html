@@ -10,6 +10,17 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="application-name" content="SmartPeak" />
+    <!-- PWA standalone: Android usa mobile-web-app-capable; iOS usa los apple-* -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="SmartPeak" />
+    <!-- "black": barra opaca negra. El layout NO usa env(safe-area-inset-top)
+         (solo bottom), así que "black-translucent" solaparía el header bajo el
+         notch. Negro opaco = coherente con el tema oscuro por defecto y sin tapar
+         contenido. Nunca "default" (barra blanca, rompe la estética). -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <!-- Tipografía de la marca (igual que la landing): Space Grotesk para la UI,
          Space Mono para los datos/labels técnicos. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

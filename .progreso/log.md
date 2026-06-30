@@ -4,7 +4,115 @@
 
 ---
 
-## 2026-06-30 — Ingesta horaria (intradía) de FC, pasos y energía
+2026-06-30 — Scores biométricos deterministas: motor puro (sueño/readiness/esfuerzo/energía/estrés) + baseline + 28 tests; integrados al vuelo en GET /metrics/latest; UI de Hoy cableada (Readiness real, sueño=calidad%, energía/esfuerzo, estrés "próximamente"); DESIGN.md §14 + 2 tokens. Revisado (motor/integración/UI) y validado por el usuario. Decidido: estrés vía HRV manual; ingesta por captura+IA (3 vías) → nuevo dispositivo.md.
+
+---
+
+## 2026-06-30 — Skills de diseño traídas al REPO (`.claude/skills/`) + `impeccable` descartada
+
+- **Disparador:** el usuario pregunta por qué las skills de diseño "instaladas" no están en
+  `.claude/skills/`. **Causa raíz:** la decisión 2026-06-27 las instaló en `~/.claude/skills/`
+  (home global del Mac), no en el repo; al clonar al VPS no viajaron (allí ese dir no existe).
+- **Hecho:** copiadas `design-taste-frontend` y `emil-design-eng` desde la copia local de
+  `total-grind/.agents/skills/` a `smartpeak/.claude/skills/` (son `SKILL.md` puros). Ya aparecen
+  como skills disponibles en la sesión.
+- **`impeccable` descartada** (coincidencia usuario+orquestador): es un sistema con instalador
+  propio (50 scripts en `.agents/`, 23 comandos) que solapa con DESIGN.md, ya autoritativo. Se
+  deja fuera; sus ideas ya integradas en DESIGN.md no se revierten.
+- **Bloqueado por el harness:** el auto-mode classifier veta descargar repos hallados por el
+  agente y auto-otorgarse el permiso. `review-animations` (de `emilkowalski/skills`) queda
+  **pendiente** de que el usuario la descargue o añada `Bash(npx skills add:*)` a la config.
+- **Doc:** CLAUDE.md §5 actualizado (lista 3 skills, ruta `.claude/skills/`); decisión y orígenes
+  de repos en `decisiones.md` (2026-06-30).
+
+---
+
+## 2026-06-30 — PWA instalable («Añadir a pantalla de inicio») + affordance en Perfil
+
+- PWA instalable: manifest + metas iOS + SW mínimo + affordance «Instalar app» en Perfil (Android:
+  prompt nativo / iOS: guía Compartir→Añadir). Iconos maskable generados a mano. El revisor detectó
+  captura tardía de `beforeinstallprompt` (se montaba en el componente de Perfil, tarde); corregido
+  con store global importado en `main.tsx`. Build/lint/typecheck en verde. Enfoque MANUAL (sin
+  `vite-plugin-pwa`), SW NO offline-first (ignora `/api`; cumple regla 4). DESIGN.md §13.
+  **✅ Validado en iPhone (Safari) por el usuario (2026-06-30)** — el caso de uso principal.
+  **Falta (no prioritario):** prueba real en Android (Chrome) + Lighthouse «Installable».
+
+---
+
+## 2026-06-30 — Scrub táctil de las gráficas (arrastrar el dedo) + sin selección de texto
+
+- **Disparador:** en móvil el tooltip funcionaba pero (a) al mantener pulsado se **seleccionaba el
+  texto / salía la lupa de iOS** (feo), y (b) **no se podía arrastrar el dedo** por la gráfica (había
+  que ir tocando punto por punto), sobre todo en FC.
+- **Front (ejecutor):** clase `.sp-chart-scrub` (`touch-action: pan-y` + `user-select:none` +
+  `-webkit-user-select:none` + `-webkit-touch-callout:none`) en las 3 gráficas → no hay selección
+  ni callout; el dato (cifra-héroe + `DetailStats`) queda FUERA, sigue seleccionable. **Drag-to-
+  scrub**: arrastrar el dedo mueve el punto/segmento activo y su tooltip; al levantar se mantiene
+  visible; tap-fuera cierra. El sueño pasó a un contenedor único enfocable con hit-area ~44px.
+- **1ª revisión: APTO CON RESERVAS** → hallazgo 🟠 real: `setPointerCapture` en el `pointerdown`
+  **secuestraba el scroll vertical** cuando el gesto empezaba sobre la gráfica.
+- **Fix (ejecutor):** se **quitó toda la captura de puntero**; se confía en `touch-action: pan-y`
+  (el navegador arbitra: vertical=scroll de página → `pointercancel` oculta el tooltip; horizontal=
+  scrub). Mecánica extraída a un hook genérico compartido **`usePointerScrub(pickIndex, count)`**
+  (`useHourScrubber` queda como wrapper de 24; el sueño lo usa con sus fases) → elimina la
+  duplicación y el riesgo de `lostpointercapture`. **2ª revisión: APTO** (typecheck·lint·build
+  verdes; cero `setPointerCapture` en código; modelo sin captura, teclado por `count` y `pickPhase`
+  validados; orden de hooks correcto). 2 hallazgos 🟢 cosméticos (uno —redacción de un comentario
+  CSS— corregido). DESIGN.md §12b actualizada.
+- **✅ Validado en móvil por el usuario (2026-06-30):** el arrastre (scrub), el scroll vertical y la
+  no-selección de texto funcionan. Pendiente solo repaso visual en desktop + ambos temas.
+
+---
+
+## 2026-06-30 — Tooltip interactivo en las gráficas del desglose (hover desktop · tap móvil)
+
+- **Disparador:** el usuario pidió un "hover" en las gráficas que en móvil aparezca al pulsar, y
+  asegurar la responsividad a 375px.
+- **Front (ejecutor):** `ChartTooltip` (burbuja reutilizable, `--surface-2`+borde+sombra, clampada
+  dentro de la gráfica) + hook `useHourScrubber` (hora activa unificada: hover ratón / tap táctil
+  con toggle / teclado ←→·Esc / cierre por tap-fuera). Integrado en barras (pasos/energía) y FC
+  (con snap al sample real más cercano + guía vertical + punto sobre el avg). En sueño, los
+  segmentos de fase pasan a `<button>` (foco/teclado/tap nativos) con su tooltip. Keyframe
+  `tooltip-in` (fade+scale<200ms, off en `prefers-reduced-motion`). Responsividad: `touch-pan-y`
+  (no atrapa el scroll vertical), barra de sueño a 16px, sin overflow horizontal. DESIGN.md §12b.
+- **Revisor: APTO CON RESERVAS** → 2 hallazgos corregidos en el momento: (1) **desfase horizontal**
+  del tooltip de FC (anclaba en `(h+0.5)/24` mientras el punto/guía usan `h/23`; unificado a
+  `toX(hour)`); (2) **hover por `pointerType`** en JS en vez de la media query que exige §11/§12b →
+  añadido guard `matchMedia('(hover: hover) and (pointer: fine)')` (regla dura), conservando el
+  filtro `pointerType`. Verificado: el punto de FC NO se descuadra en vertical (riesgo descartado),
+  el listener global de tap-fuera no fuga, teclado sin doble-toggle, clamp del tooltip garantizado a
+  375px. typecheck · lint · build en verde tras los arreglos.
+- **Falta:** validación visual/táctil en navegador real (gesto tap/tap-fuera, `touch-pan-y`).
+
+---
+
+## 2026-06-30 — Desglose intradía: cards de «Hoy» clickables → vista de detalle por métrica
+
+- **Disparador:** el usuario quiere empezar a MOSTRAR los datos por horas (ya ingeridos): que los
+  iconos/cards del dashboard sean clickables y dentro se vea el desglose. Consultadas 2 decisiones
+  de producto (ver `decisiones.md`): **Sueño → desglose por fases** (no por horas) y **apertura →
+  vista a pantalla completa** con URL propia (no bottom-sheet).
+- **Backend:** sin cambios. `GET /api/metrics/latest` ya devuelve el documento completo → las
+  series horarias (`heartRate.samples`/`steps.hourly`/`activeEnergy.hourly`) ya viajaban al front;
+  solo faltaba tiparlas y consumirlas.
+- **Front (ejecutor, 2 piezas):**
+  - *Fundaciones + interactividad:* tipadas las series en `types.ts`; extraído `metricColorVar` a
+    `metricColors.ts`; helpers `hourFromT`/`formatHourLabel` en `format.ts`; `Widget` admite prop
+    `to?` y se renderiza como `<Link>` (estados hover/active/focus-visible) → solo las cards en
+    estado `data` navegan a `/metrica/:key`; ruta anidada bajo `AppLayout` (shell persiste).
+  - *Detalle + gráficas:* `MetricDetailPage` (cabecera «‹ Hoy» + cifra-héroe + estados loading/
+    error/vacío/sin-desglose + redirección si la métrica no es real). Gráficas SVG hechas a mano:
+    `HourlyBarChart` (barras 0–23, pico resaltado — pasos/energía), `HeartRateChart` (banda mín–máx
+    + línea media — FC), `SleepBreakdown` (barra de fases apilada por opacidad de `--m-sleep` +
+    lista + inicio→fin), `DetailStats` reutilizable. Keyframe de entrada `.sp-chart-in` con apagado
+    en `prefers-reduced-motion`. DESIGN.md ampliado con §12.
+- **Revisor: APTO** (sin críticos ni importantes). typecheck · lint (`--max-warnings 0`) · build de
+  Vite en verde; lógica de las 4 gráficas validada contra casos borde (cero, rango plano, sample
+  único, fases ausentes, `t` corrupto). 3 hallazgos 🔵 menores; 2 corregidos en el momento
+  (`transformOrigin` muerto en el `<rect>`, comentarios «STUB» obsoletos), 1 descartado (`key` por
+  label, sin colisión real hoy).
+- **Falta:** validación visual en navegador (375px + desktop, ambos temas) con datos horarios
+  reales; merge `staging`→`main` + redespliegue.
 
 - **Disparador:** el usuario quiere desglose **por horas** de pasos y FC (media horaria) para
   poder hacer gráficos. Inspección del export real de HAE: con *Time Grouping = Hour* cada

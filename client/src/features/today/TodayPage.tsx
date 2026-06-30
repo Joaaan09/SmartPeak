@@ -9,6 +9,25 @@ import { TrendWidget } from './widgets/TrendWidget';
 import { useTodayMetrics } from './useTodayMetrics';
 import { buildManualCards, buildMetricCards } from './buildTodayView';
 import { timeAgo } from './format';
+import type { ReadinessConfidence, ReadinessData, ReadinessResult } from './types';
+
+// Confianza del cálculo de Readiness → subtítulo del widget (DESIGN.md §14):
+// en cold-start (pocos días de histórico) NO se finge precisión; se avisa en el
+// `sub`. El widget pinta ese slot tal cual (no hace falta rediseñarlo).
+const CONFIDENCE_SUB: Record<ReadinessConfidence, string> = {
+  low: 'Confianza baja · pocos días de histórico',
+  medium: 'Confianza media',
+  high: 'Listo para entrenar',
+};
+
+/** Mapea el resultado del motor de Readiness al modelo de vista del widget. */
+function toReadinessData(result: ReadinessResult): ReadinessData {
+  return {
+    score: result.score,
+    state: result.state,
+    sub: CONFIDENCE_SUB[result.confidence],
+  };
+}
 
 // Pestaña Hoy (DESIGN.md §5/§7) — dashboard de widgets en MODO VISTA, ahora
 // alimentado por datos biométricos REALES (GET /api/metrics/latest).
@@ -22,15 +41,16 @@ import { timeAgo } from './format';
 // - error   → mensaje sobrio + Reintentar (monocromo).
 // - ready + null → vacío global (CTA a Sincronizar) + cards manuales en
 //   próximamente; Readiness/Coach/Trend en próximamente.
-// - ready + datos → 4 cards reales (con-dato o sin-dato), Readiness/Coach/Trend
-//   en próximamente, fila manual en próximamente.
+// - ready + datos → cards reales (interpretadas + crudas), Readiness con su
+//   score real (o próximamente si el motor no lo pudo calcular).
 //
-// Readiness · Coach · Tendencia SIEMPRE van en "próximamente": su cálculo/análisis
-// aún no existe. Las cards manuales (HRV · SpO2 · Peso) también.
+// Readiness se cablea a su score real (DESIGN.md §14); cae a "próximamente" si
+// `scores.readiness == null` (sin datos clave). Coach y Tendencia SIGUEN en
+// "próximamente" (su análisis aún no existe), igual que las manuales (HRV·SpO2·Peso).
 
 export function TodayPage() {
   const { user } = useAuth();
-  const { status, dailyMetrics, error, refetch } = useTodayMetrics();
+  const { status, dailyMetrics, scores, error, refetch } = useTodayMetrics();
 
   const roleLabel = user ? ROLE_LABELS[user.role] : undefined;
 
@@ -39,8 +59,12 @@ export function TodayPage() {
     ? `Sincronizado · ${timeAgo(dailyMetrics.updatedAt)}`
     : 'Sin sincronizar';
 
-  const metricCards = buildMetricCards(dailyMetrics);
+  const metricCards = buildMetricCards(dailyMetrics, scores);
   const manualCards = buildManualCards();
+
+  // Readiness real si el motor lo pudo calcular; si no, "próximamente".
+  const readiness = scores?.readiness;
+  const readinessData = readiness ? toReadinessData(readiness) : undefined;
 
   return (
     <>
@@ -62,7 +86,13 @@ export function TodayPage() {
 
             {/* Rejilla principal (bento). */}
             <div className="grid auto-rows-min grid-cols-2 gap-[14px] lg:auto-rows-[minmax(112px,1fr)] lg:grid-cols-12 lg:[grid-auto-flow:dense]">
-              <ReadinessWidget comingSoon index={0} />
+              {/* Readiness real cuando hay score; si no, "próximamente"
+                  (DESIGN.md §14). Mientras carga, también "próximamente". */}
+              <ReadinessWidget
+                data={readinessData}
+                comingSoon={status === 'loading' || !readinessData}
+                index={0}
+              />
               <CoachWidget comingSoon roleLabel={roleLabel ?? 'Coach'} index={1} />
 
               {status === 'loading'

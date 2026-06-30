@@ -1,5 +1,6 @@
 import { Widget, type WidgetSpan } from './Widget';
-import type { DeltaDirection, MetricCard, MetricKey } from '../types';
+import { metricColorVar } from '../metricColors';
+import type { DeltaDirection, MetricCard } from '../types';
 
 // Widget de métrica REUTILIZABLE con tres estados de dato (DESIGN.md §11b),
 // conservando siempre su chrome y su tamaño (no se oculta ni colapsa):
@@ -14,17 +15,8 @@ import type { DeltaDirection, MetricCard, MetricKey } from '../types';
 //
 // También un modo `loading` (skeleton que respeta la forma; nunca spinner).
 
-// Métrica → su token de color (--m-*). Cada color SOLO en su métrica (DESIGN.md §3).
-// (energy/spo2 no usan clase Tailwind; el anillo lee la var CSS por estilo inline.)
-const metricColorVar: Record<MetricKey, string> = {
-  sleep: 'var(--m-sleep)',
-  rhr: 'var(--m-rhr)',
-  steps: 'var(--m-steps)',
-  energy: 'var(--m-energy)',
-  hrv: 'var(--m-hrv)',
-  spo2: 'var(--text-faint)', // sin token propio; en próximamente no se usa color
-  weight: 'var(--m-weight)',
-};
+// El mapa métrica → token de color (--m-*) vive en ../metricColors (compartido
+// con la vista de detalle). Cada color SOLO en su métrica (DESIGN.md §3).
 
 // Dirección del delta → color de señal + glifo (solo cuando hay histórico).
 const deltaMeta: Record<DeltaDirection, { colorVar: string; glyph: string }> = {
@@ -98,8 +90,9 @@ export function MetricWidget({
             <span className="mono text-[27px] font-bold leading-[1.05] tracking-[-0.02em] text-text-faint">
               —
             </span>
+            {/* Motivo concreto si lo hay (p. ej. "Requiere HRV"); si no, copy genérico. */}
             <span className="disp mt-[4px] text-[11.5px] text-text-faint">
-              próximamente
+              {data.reason ?? 'próximamente'}
             </span>
           </span>
         </div>
@@ -137,12 +130,21 @@ export function MetricWidget({
   // Con dato.
   const delta = data.delta ? deltaMeta[data.delta.direction] : null;
   const ringColor = metricColorVar[data.key];
+  // Navegación OPCIONAL (DESIGN.md §12/§14): solo las cards con desglose intradía
+  // (sueño + crudas) navegan. Los scores derivados sin desglose (nivel de
+  // energía, esfuerzo) marcan `navigable:false` → no son <Link>, solo dato.
+  const navigable = data.navigable !== false;
 
   return (
     <Widget
       span={span}
       index={index}
-      ariaLabel={`${data.label}: ${data.value}${data.unit ? ' ' + data.unit : ''}`}
+      // La card con dato y desglose navega a su intradía (DESIGN.md §12); el
+      // aria-label lo anuncia. Las no navegables (y empty/soon) no llevan `to`.
+      to={navigable ? `/metrica/${data.key}` : undefined}
+      ariaLabel={`${data.label}: ${data.value}${data.unit ? ' ' + data.unit : ''}${
+        navigable ? ' — ver desglose' : ''
+      }`}
       // --ring + --p alimentan el conic-gradient del mini-anillo (ver clase sp-minring).
       style={{
         ['--ring' as string]: ringColor,
