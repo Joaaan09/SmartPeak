@@ -48,6 +48,17 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## En curso
 
+- **Pestaña «Hoy» CONECTADA A BIOMETRÍA REAL + botón «Sincronizar» funcional (2026-06-30),
+  revisada (APROBADA).** Nuevo `GET /api/metrics/latest` (autenticado) que devuelve el
+  `DailyMetrics` más reciente (200 con `{dailyMetrics:null}` si no hay datos, no 404). El front
+  elimina el mock `data.ts` y consume el endpoint con el hook `useTodayMetrics` (loading/error/
+  ready + re-fetch on `visibilitychange`/`focus`). **4 cards reales** (Sueño·FC reposo·Pasos·
+  Energía) desde el sync; **HRV/SpO2/Peso** (manuales) y **Readiness/Coach/Tendencia** en estado
+  **«Próximamente»** (alcance acordado: «solo datos reales», el resto va a la tarea de su cálculo
+  + IA). Estado vacío global con CTA a Sincronizar; skeletons. El botón «Sincronizar» dispara el
+  deep link del Atajo de iOS (`shortcuts://run-shortcut?name=SmartPeak`). Diseño: token
+  `--m-energy` (coral, provisional) + DESIGN.md §3b/§11b. Metas/ringPct provisionales (en código).
+  **Falta validación visual en navegador** (375px + desktop, ambos temas).
 - **Sincronización biométrica — pasos 1 (recepción/inspección) y 2 (PERSISTENCIA) HECHOS, revisados
   (aprobados) y DESPLEGADOS en producción.** `POST /api/sync/health` (token por usuario, header
   `x-sync-token`) valida con Zod, normaliza el payload de HAE v2 y hace **upsert de un documento
@@ -72,11 +83,15 @@ infinito (StrictMode) en `AuthContext` — ver log/decisiones.
 
 ## Siguiente paso (elegir)
 
-0. **Sobre el sync biométrico (recepción + persistencia): HECHO y desplegado.** Próximos sobre esta
-   base: (a) **cálculo del Readiness** en el backend (sueño + desviación FC reposo + carga; medias en
-   JS, cache diaria §4); (b) **entrada manual** de HRV/SpO2/peso (endpoint autenticado + UI en Perfil,
-   `source:"manual"` en el mismo `DailyMetrics`); (c) **vista Hoy/Tendencias contra datos reales**
-   (sustituir el mock `data.ts`); (d) botón "Sincronizar" deep link + endpoint generar/rotar token;
+0. **Sync biométrico (recepción + persistencia + lectura en Hoy): HECHO y desplegado.** Próximos
+   sobre esta base: (a) **cálculo del Readiness** en el backend (sueño + desviación FC reposo +
+   carga; medias en JS, cache diaria §4) → al hacerlo, retirar el «Próximamente» del anillo, el
+   coach y la tendencia, y sustituir las metas/ringPct provisionales por objetivos reales del
+   perfil/rol; (b) **entrada manual** de HRV/SpO2/peso (endpoint autenticado + UI en Perfil,
+   `source:"manual"` en el mismo `DailyMetrics`) → al hacerlo, sus 3 cards dejan de ser
+   «Próximamente»; (c) **Tendencias contra datos reales** (Hoy ya consume datos reales vía
+   `GET /api/metrics/latest`; falta la pestaña Tendencias e histórico multi-día para deltas/
+   sparklines); (d) endpoint **generar/rotar token** de sync (el deep link del botón ya funciona);
    (e) tests permanentes (mongodb-memory-server ya instalado). Subir `client_max_body_size` solo si
    el payload supera ~1MB (hoy ~800 bytes/día, sobra margen).
 1. **Iteración B de Hoy — modo edición** del dashboard: jiggle iOS, drag-reorder, resize por

@@ -31,6 +31,8 @@ interface WidgetProps {
   index?: number;
   /** Etiqueta accesible del widget como región. */
   ariaLabel: string;
+  /** Marca el widget como no operable (estado "próximamente"). */
+  ariaDisabled?: boolean;
   /** Clases extra (alineación interna, variantes como el coach). */
   className?: string;
   /** Estilo extra (p. ej. --ring / --p del anillo de métrica). */
@@ -42,6 +44,7 @@ export function Widget({
   span,
   index = 0,
   ariaLabel,
+  ariaDisabled,
   className = '',
   style,
   children,
@@ -49,6 +52,7 @@ export function Widget({
   return (
     <section
       aria-label={ariaLabel}
+      aria-disabled={ariaDisabled || undefined}
       className={[
         'sp-widget relative flex min-w-0 flex-col overflow-hidden rounded-r',
         'border border-line bg-surface px-[18px] py-[16px]',

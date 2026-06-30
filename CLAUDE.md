@@ -17,6 +17,11 @@ para cada rol, qué es ruido y qué es señal).
 - No suavices el feedback ni asientas por inercia. Discrepar con argumentos es lo que se espera.
 - Distingue hechos de opiniones y señala lo que no sabes o no has verificado.
 
+**Conciso mientras trabajas, con cierre al terminar.** Durante la ejecución no narres cada paso
+en detalle: ve resumiendo, lo justo para que sepa por dónde vas (evita llenar la ventana de
+contexto). **Al terminar** sí puedes extenderte un poco más con el resumen del resultado. Detalle
+exhaustivo solo si lo pido explícitamente.
+
 ## 1. Qué es
 
 Web app **MERN** (MongoDB · Express · React · Node.js) de **analítica biométrica inteligente

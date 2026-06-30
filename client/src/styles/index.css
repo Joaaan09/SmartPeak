@@ -121,6 +121,23 @@ button:focus:not(:focus-visible) {
   mask: radial-gradient(farthest-side, transparent 67%, #000 68%);
 }
 
+/* Skeleton de carga (DESIGN.md §11/§11b): respeta la forma del widget, nunca
+   spinner. Bloque neutro con pulso suave de opacidad (no shimmer barato). */
+@keyframes skel-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.sp-skel {
+  background: var(--ring-track);
+  border-radius: var(--r-sm);
+  animation: skel-pulse 1.4s var(--ease-in-out) infinite;
+}
+
 /* Coach IA — MONOCROMO (decisión 2026-06-29, como la landing). Sin gradiente.
    El LED del badge es un punto neutro que respira lentamente (≈2.6s) para
    señalar "vivo/inteligente" sin teñir la app. Reduced-motion lo detiene. */
@@ -151,6 +168,10 @@ button:focus:not(:focus-visible) {
   }
   /* LED: deja de pulsar (queda visible, no se elimina). */
   .sp-led {
+    animation: none;
+  }
+  /* Skeleton: deja de pulsar (mantiene el bloque visible). */
+  .sp-skel {
     animation: none;
   }
   *,

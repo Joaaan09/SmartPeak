@@ -261,6 +261,37 @@ Estas ya estaban tomadas antes del harness; se listan aquí para tenerlas a mano
   **kcal** (÷4.184). Normalizador defensivo: ignora métricas desconocidas y puntos sin fecha.
 - **Pendiente:** cálculo del Readiness; entrada manual (endpoint + UI Perfil) de HRV/SpO2/peso; vista
   Hoy/Tendencias contra datos reales; tests (mongodb-memory-server ya instalado).
+- **Dev local en el VPS (2026-06-30):** se desarrolla con `npm run dev` en el propio VPS y acceso por
+  **túnel SSH** (`ssh -L 5173:localhost:5173 -L 4000:localhost:4000`). Ventaja: no se toca firewall ni
+  CORS ni se exponen puertos al exterior; `localhost` vale tal cual. El Mongo del compose se expone
+  **solo a loopback** (`127.0.0.1:27017:27017`) para que el dev del host lo alcance sin abrirlo a
+  internet. Dev usa **la misma BD que producción** (decisión provisional del usuario: "por el momento
+  me da igual"). **Pendiente/riesgo:** dev escribe sobre datos reales; cuando moleste, separar a una BD
+  `smartpeak_dev`. La contraseña de Mongo apareció parcialmente en un transcript local (credencial
+  propia, no expuesta a terceros); rotarla si se quiere ser estricto.
+
+---
+
+### 2026-06-30 · «Hoy» contra datos reales: `GET /metrics/latest`, estados de widget y alcance «solo datos reales»
+
+- **Decisión:** la pestaña Hoy deja de usar el mock `data.ts` y se alimenta de
+  `GET /api/metrics/latest` (devuelve el `DailyMetrics` más reciente; 200 con `null` si no hay
+  datos, no 404). Se muestran como **reales** solo las 4 métricas que llegan del sync del anillo
+  (Sueño · FC reposo [proxy `heartRate.min`] · Pasos · Energía activa). HRV/SpO2/Peso (entrada
+  manual aún no implementada) y Readiness/Coach/Tendencia (cálculo/IA pendientes) se muestran en
+  estado **«Próximamente»** (DESIGN.md §11b), nunca con cifras inventadas.
+- **Motivo:** honestidad del producto. Un Readiness sin baseline de varios días o un coach sin el
+  modelo de IA elegido serían ruido y contradirían el valor (autorregulación = desviación contra el
+  histórico). Mejor enseñar lo que de verdad tenemos y marcar el resto como pendiente.
+- **Sub-decisiones:** (1) **deltas ↑/↓ omitidos** mientras no haya histórico (no se inventan); (2)
+  **metas/ringPct provisionales** (pasos 10k, sueño 8h, energía 500 kcal, FC reposo heurística
+  `(80-min)/40`) anotadas en código, a sustituir por objetivos del perfil/rol; (3) token
+  **`--m-energy`** (coral) nuevo para energía activa, provisional como el resto de `--m-*`; (4) el
+  botón «Sincronizar» dispara el **deep link** del Atajo de iOS llamado `SmartPeak` y el hook
+  re-fetchea al volver a la app (`visibilitychange`/`focus`), sin necesidad de callback.
+- **Alternativas descartadas:** calcular un Readiness básico ya (descartado por el usuario: alcance
+  «solo datos reales»); endpoint `/today` por fecha exacta (descartado: el Atajo exporta el día
+  anterior, así que «el más reciente» es lo correcto); mantener el mock (mostraría datos falsos).
 
 ---
 

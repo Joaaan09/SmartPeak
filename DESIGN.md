@@ -175,12 +175,17 @@ marca tinta/papel. Se cambian en un único sitio (los `--m-*` de `tokens.css`).
 --m-sleep         #8278F6        #5F58E0         Sueño — índigo
 --m-steps         #FF9F0A        #C2700A         Pasos — naranja
 --m-weight        #E5B83C        #9C7A1A         Peso — oro
+--m-energy        #FF7847        #CC5526         Energía activa — coral (añadido 2026-06-30)
 ```
 Criterios aplicados: (1) **hues separados** entre sí (azul · teal · rosa · índigo · naranja ·
-oro); (2) **distintos de las señales** `--pos`(verde)/`--neg`(rojo) para no confundir el color de
-una métrica con su delta; (3) **legibles sobre `--surface` en ambos temas** → el tema papel usa
-variantes más profundas (los colores vivos pierden contraste sobre blanco). Regla de uso: cada
-`--m-*` aparece **solo en el dato** de su métrica (anillo, sparkline, barra), nunca en el chrome.
+oro · coral); (2) **distintos de las señales** `--pos`(verde)/`--neg`(rojo) para no confundir el
+color de una métrica con su delta; (3) **legibles sobre `--surface` en ambos temas** → el tema
+papel usa variantes más profundas (los colores vivos pierden contraste sobre blanco). Regla de
+uso: cada `--m-*` aparece **solo en el dato** de su métrica (anillo, sparkline, barra), nunca en
+el chrome.
+**`--m-energy` (coral) es PROVISIONAL** (como el resto de `--m-*`): energía y pasos forman la
+familia cálida "carga"; energía toma un coral más rojizo que el ámbar de pasos y se separa del
+rojo puro de `--neg` por su componente naranja. Pendiente de validación visual junto a Pasos.
 
 ### 3c. ~~Gradiente IA~~ — RETIRADO (2026-06-29)
 El coach es **monocromo** como la landing: sin gradiente, sin barra superior de color. La señal
@@ -229,16 +234,29 @@ la pantalla de inicio de iOS.
 
 ## 6. Shell — navegación y header
 
-### Navegación — regleta (decisión tomada)
-Rail estrecho a la izquierda (≈66px), **sin iconos Lucide**.
+### Navegación — regleta (decisión tomada · revisada 2026-06-30)
+Rail a la izquierda con **icono + label apilados**. **Iconos SÍ, pero SOLO custom** (SVG
+inline propios, estilo `MoonIcon`: `stroke="currentColor"`, trazo fino ~1.5, `aria-hidden`,
+monocromos). **Lucide sigue vetada** y el chrome sigue monocromo (el color vive solo en los
+datos). La finura manda: bordes 1px `--line`, **sin sombras pesadas ni tiles macizos**; el
+tile activo es un relleno sutil, no una card.
 
-- **Desktop**: cada pestaña es **numeral + label corto** apilados (`01 Hoy`, `02 Tnd`,
-  `03 Ent`, `04 Prf`). Numeral en mono. Inactivas en `--text-faint`; **activa = cápsula
-  rellena** sutil (`--surface-2`) con label en `--text` (selección tipo sidebar iOS).
-- **Ancla de identidad**: arriba del rail, el **Readiness compacto** (número + barra) — la
-  nav la firma el componente firma, no un logo.
-- **Móvil**: **tab bar inferior** nativa de iOS (el uso será mayoritariamente en el teléfono;
-  sincronizas desde un Atajo de iOS). Activa marcada por color/peso, estilo nativo.
+- **Set de iconos** (uno por pestaña, todos monocromos `currentColor`):
+  - `Hoy` → **dot relleno** (●, "ahora / en directo") — es su icono propio, no el marcador de activo.
+  - `Tendencias` → **barras** (mini bar-chart).
+  - `Entreno` → **chevron/caret arriba** (∧, progresión/levantar).
+  - `Perfil` → **persona** (cabeza + hombros, contorno).
+  - Toggle de tema → `MoonIcon` (ya existe).
+- **Desktop**: cada pestaña = **icono + label largo** (`Hoy`, `Tendencias`, `Entreno`,
+  `Perfil`) apilados. Ancho del rail el necesario para que `Tendencias` quepa holgado en una
+  línea (~96–112px). Inactivas en `--text-faint`; **activa = tile relleno sutil `--surface-2`**
+  con icono+label en `--text` (selección tipo sidebar iOS). El **indicador de activo es el
+  tile**, no el dot.
+- **Ancla de identidad**: arriba del rail se mantiene el **Readiness compacto** (número +
+  barra) — la nav la firma ese componente, no un logo.
+- **Toggle de tema** al pie del rail (`MoonIcon`), separado de la nav.
+- **Móvil**: **tab bar inferior** nativa de iOS con **icono + label** (mismos iconos que el
+  rail), activa marcada por color/peso. El toggle de tema NO va en la tab bar (vive en Perfil).
 
 ### Header de cada pestaña
 Wordmark **pico + `SmartPeak · Hoy`** discreto (el "pico" de la marca, ver `client/public/brand`)
@@ -403,3 +421,27 @@ No es opcional ni "para luego".
   semánticos; en claro/oscuro solo se redefinen los semánticos). Neutros con un punto de chroma
   hacia el hue (0.005–0.015), no grises planos ni "cream" tintado de relleno. Contraste AA:
   cuerpo ≥4.5:1, texto grande ≥3:1. Nunca gris claro "por elegancia" para texto legible.
+
+### 11b. Estados de dato del widget (vacío / sin dato / próximamente) — añadido 2026-06-30
+La pantalla `Hoy` se alimenta de datos reales (`GET /api/metrics/latest`). Un widget puede estar
+en uno de estos estados; **distínguelos visualmente, no los mezcles** (extiende §11 — no solo el
+estado feliz). Regla común: el widget **conserva su chrome y su tamaño** (no se oculta ni colapsa,
+para no romper el bento); lo que cambia es el contenido del dato.
+
+- **Con dato (feliz):** cifra en Space Mono `tabular-nums`, color `--m-*` en el anillo/gráfica, y
+  delta si hay histórico. **Sin histórico aún → NO se muestra delta** (no se inventan ↑/↓); el
+  hueco del delta queda vacío, no con un "0%".
+- **Sin dato hoy** (la métrica es real pero el sync no la trajo ese día): cifra = `—` en
+  `--text-faint`, anillo en `--ring-track` (sin color de métrica), caption breve tipo
+  `sin dato`. El label de la métrica se mantiene legible (no atenuado del todo).
+- **Próximamente** (métrica/feature aún no implementada: HRV·SpO2·Peso de entrada manual, y
+  Readiness·Coach·Tendencia hasta su cálculo): badge/eyebrow mono **`PRÓXIMAMENTE`** en
+  `--text-faint`, **sin color de métrica** (anillo en `--ring-track` o ausente), sin cifra. El
+  conjunto va atenuado (contenido del dato a baja prominencia) pero el **borde y el label siguen
+  legibles** para comunicar "esto vendrá". No es interactivo (no es botón) y lleva
+  `aria-disabled`/texto accesible que lo anuncie. No usar el rojo `--neg` ni tono de error: es
+  ausencia por diseño, no fallo.
+- **Cargando:** skeleton que respeta la forma del widget (§11), nunca spinner; pulso suave (§8).
+- **Estado vacío global** (`dailyMetrics: null`, aún no se sincronizó nada): además de las cards
+  en "sin dato", muestra una llamada a la acción sobria que **apunta al botón Sincronizar**
+  (texto tipo "Aún no hay datos — pulsa Sincronizar"). Monocromo, sin ilustración recargada.

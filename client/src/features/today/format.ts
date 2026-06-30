@@ -15,3 +15,24 @@ export function timeAgo(isoDate: string, now: Date = new Date()): string {
   const diffDay = Math.round(diffHour / 24);
   return `hace ${diffDay} d`;
 }
+
+// Formateador de enteros con separador de miles en español ("13.494").
+const integerFmt = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 });
+
+/** Entero con separador de miles en español (13494 → "13.494"). */
+export function formatInteger(n: number): string {
+  return integerFmt.format(Math.round(n));
+}
+
+/** Horas decimales → "Hh MMm" (6.9 → "6h 54m"). */
+export function formatHours(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h}h ${String(m).padStart(2, '0')}m`;
+}
+
+/** Acota un porcentaje al rango 0–100 para el relleno del anillo. */
+export function clampPct(pct: number): number {
+  return Math.max(0, Math.min(100, pct));
+}

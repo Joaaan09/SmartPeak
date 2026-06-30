@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { Widget } from './Widget';
-import type { DeltaDirection, TrendData } from '../data';
+import type { DeltaDirection, TrendData } from '../types';
 
 // Widget de tendencia (DESIGN.md §7): gráfico SVG de línea + área (HRV 7 días)
 // en --m-hrv, como el mockup (viewBox 0..600/0..110, preserveAspectRatio:none,
@@ -21,13 +21,56 @@ const deltaGlyph: Record<DeltaDirection, string> = {
 
 export function TrendWidget({
   data,
+  comingSoon = false,
   index = 0,
 }: {
-  data: TrendData;
+  /** Datos reales (omitidos en modo próximamente). */
+  data?: TrendData;
+  /** Modo "próximamente": sin histórico aún (DESIGN.md §11b). */
+  comingSoon?: boolean;
   index?: number;
 }) {
   // useId evita colisiones del id del gradiente si hubiera varios TrendWidget.
   const gradId = useId();
+
+  if (comingSoon || !data) {
+    return (
+      <Widget
+        span="8"
+        index={index}
+        ariaLabel="Tendencia: próximamente"
+        ariaDisabled
+        className="opacity-60"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="eyebrow text-[10.5px] text-text-faint">Tendencia</span>
+          <span className="mono text-[9px] font-bold tracking-[0.08em] text-text-faint">
+            PRÓXIMAMENTE
+          </span>
+        </div>
+        <div className="mt-[12px] flex min-h-[120px] flex-1 items-center justify-center">
+          <svg
+            viewBox="0 0 600 110"
+            preserveAspectRatio="none"
+            className="block h-full w-full"
+            aria-hidden="true"
+          >
+            <line x1="0" y1="92" x2="600" y2="92" stroke="var(--line)" strokeWidth="1" />
+            <line
+              x1="0"
+              y1="55"
+              x2="600"
+              y2="55"
+              stroke="var(--line)"
+              strokeWidth="1"
+              strokeDasharray="3 6"
+            />
+          </svg>
+        </div>
+      </Widget>
+    );
+  }
+
   const pts = data.points;
 
   const polyline = pts.map((p) => `${p.x},${p.y}`).join(' ');

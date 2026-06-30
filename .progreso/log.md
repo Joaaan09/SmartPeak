@@ -4,6 +4,63 @@
 
 ---
 
+## 2026-06-30 — Pestaña «Hoy» conectada a biometría real + botón Sincronizar funcional
+
+- **Backend:** nuevo `GET /api/metrics/latest` (autenticado, `requireAuth`) que devuelve el
+  `DailyMetrics` más reciente del usuario (`findOne({userId}).sort({date:-1})`); responde 200 con
+  `{dailyMetrics:null}` si aún no hay datos (no 404). Archivos: `controllers/metrics.controller.ts`,
+  `routes/metrics.routes.ts`, montado en `routes/index.ts`.
+- **Frontend (Hoy):** eliminado el mock `data.ts`; la pantalla consume el endpoint vía hook
+  `useTodayMetrics` (loading/error/ready + re-fetch on `visibilitychange`/`focus`). **4 cards
+  reales** (Sueño·FC reposo·Pasos·Energía); **HRV/SpO2/Peso** (manuales) y **Readiness/Coach/
+  Tendencia** en estado **«Próximamente»**; estado vacío global con CTA a Sincronizar; skeletons.
+  `MetricWidget` refactorizado a tipo discriminado (`data`/`empty`/`soon`), delta opcional (sin
+  histórico → sin delta inventado).
+- **Sync:** el botón «Sincronizar» del header dispara el deep link del Atajo de iOS
+  (`shortcuts://run-shortcut?name=SmartPeak`); al volver a la app, el hook re-fetchea solo.
+- **Diseño:** token `--m-energy` (coral, **provisional**) en ambos temas + DESIGN.md §3b/§11b
+  (estados de dato del widget: con-dato / sin-dato / próximamente / vacío).
+- **Alcance acordado con el usuario:** «solo datos reales» (Readiness/Coach/Tendencia se posponen a
+  la tarea de su cálculo + IA). Metas/ringPct provisionales anotadas en código.
+- **Revisor: APROBADO** — typecheck/lint/build (client) + typecheck/build (server) en verde; cero
+  colores literales; hook sin fugas (cleanup de listeners + guard anti-race); estados conformes a
+  §11b. Único 🟡 (comentario del separador de miles en `format.ts`) corregido en el momento.
+- **Pendiente:** validación visual en navegador (375px + desktop, ambos temas).
+
+## 2026-06-30 — Entorno de desarrollo local en el VPS (`npm run dev`)
+
+- **Contexto:** el usuario quiere correr `npm run dev` en el propio VPS (donde ya corre la app
+  dockerizada en prod) y acceder por **túnel SSH** desde su portátil. Faltaban `client/.env` y
+  `server/.env` (el backend hacía `process.exit(1)` por falta de `MONGODB_URI`/JWT; el cliente
+  tenía `VITE_API_URL` undefined).
+- **Cambios:** creados `client/.env` (`VITE_API_URL=http://localhost:4000/api`) y `server/.env`
+  (reusa secretos JWT y credenciales Mongo del `.env` de Docker; `CLIENT_ORIGIN=http://localhost:5173`).
+  El Mongo de prod **no exponía puerto al host**, así que se añadió `ports: "127.0.0.1:27017:27017"`
+  al servicio `mongo` del `docker-compose.yml` (solo loopback, no accesible desde fuera del VPS) y se
+  recreó el contenedor (datos intactos, volumen persistente).
+- **Verificado:** backend de dev arranca, `[db] Conectado a MongoDB`, escucha en `:4000`,
+  `/api/metrics/latest` → 401 (auth OK). Dev comparte la **misma BD que producción** (aceptado por el
+  usuario "por el momento").
+
+- **Decisión de diseño (a petición del usuario, ref. imagen):** la nav pasa de *numeral mono +
+  label corto* a **icono + label largo**. Confirmados 3 puntos con el usuario: iconos custom finos
+  (no Lucide), **Readiness compacto se mantiene arriba** como ancla, y la tab bar móvil adopta los
+  mismos iconos. Filosofía: adoptar el concepto de la imagen **sin perder la finura** (bordes 1px,
+  sin sombras ni tiles macizos). Documentado en **DESIGN.md §6** (revisada 2026-06-30) ANTES de implementar.
+- **Implementación (ejecutor):** 4 iconos SVG custom en `components/icons/index.tsx` (`HoyIcon` dot,
+  `TrendsIcon` barras, `TrainIcon` chevron, `ProfileIcon` persona; estilo `MoonIcon`, `currentColor`,
+  `aria-hidden`). Campo `Icon` en `nav.ts`. `Rail.tsx` 66px→`w-[104px]`, icono+label apilados, activo =
+  tile `bg-surface-2`. `TabBar.tsx` icono+label. `typecheck`+`lint` en verde.
+- **Revisión (revisor): APROBADO** el código de nav (cumple DESIGN.md §6 y a11y; sin Lucide, monocromo,
+  finura OK; `NavLink`/`aria-current`/`aria-hidden` correctos). Reserva NO de la nav: el working tree
+  arrastra cambios de **otra(s) tarea(s) en curso** (refactor de `Hoy` con `data.ts` borrado, deep link
+  de sync en `AppHeader`, backend `metrics`, `CLAUDE.md`) → posible sesión paralela. NO se commiteó
+  (el usuario no lo pidió); si se commitea, **aislar solo los archivos de nav**.
+- Efecto colateral correcto: como el refactor de `Hoy` borró el mock `data.ts`, `AppLayout` pasa
+  `readinessScore={null}` y el Readiness del rail se ve en estado **"—" / próximamente** (no roto).
+
+---
+
 ## 2026-06-30 — Persistencia biométrica + inventario del anillo (sync paso 2)
 
 - **Inspección del shape real (paso 1 cerrado):** capturado el JSON real de HAE v2 con un volcado

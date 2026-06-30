@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
 import { Widget } from './Widget';
-import type { CoachData } from '../data';
+import type { CoachData } from '../types';
 
 // Widget Coach IA (DESIGN.md §7c) — MONOCROMO (decisión 2026-06-29, como la
 // landing): superficie elevada --surface-2, eyebrow técnico en Space Mono con un
@@ -25,13 +25,44 @@ function renderBody(body: string): ReactNode {
 export function CoachWidget({
   data,
   roleLabel,
+  comingSoon = false,
   index = 0,
 }: {
-  data: CoachData;
+  /** Datos reales (omitidos en modo próximamente). */
+  data?: CoachData;
   /** Rol legible del user (Powerlifting / Hipertrofia / Salud general). */
   roleLabel: string;
+  /** Modo "próximamente": sin análisis aún (DESIGN.md §11b). */
+  comingSoon?: boolean;
   index?: number;
 }) {
+  if (comingSoon || !data) {
+    return (
+      <Widget
+        span="4x2"
+        index={index}
+        ariaLabel={`Coach IA, ${roleLabel}: próximamente`}
+        ariaDisabled
+        className="!bg-surface-2 opacity-60"
+      >
+        <span className="eyebrow mb-[12px] inline-flex items-center gap-2 self-start text-[11px] text-text-faint">
+          <span
+            className="h-[7px] w-[7px] rounded-full bg-text-faint"
+            aria-hidden="true"
+          />
+          Coach IA · {roleLabel}
+        </span>
+        <span className="mono mb-[8px] text-[9px] font-bold tracking-[0.08em] text-text-faint">
+          PRÓXIMAMENTE
+        </span>
+        <p className="font-body text-[14px] leading-[1.55] text-text-faint">
+          Tu plan diario adaptado al rol llegará cuando el análisis de IA esté
+          activo.
+        </p>
+      </Widget>
+    );
+  }
+
   return (
     <Widget
       span="4x2"

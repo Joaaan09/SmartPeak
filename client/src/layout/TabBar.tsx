@@ -2,12 +2,11 @@ import { NavLink } from 'react-router-dom';
 import { NAV_TABS } from './nav';
 
 // Tab bar inferior (DESIGN.md §6) — solo móvil. Estilo nativo iOS: 4 items
-// (Hoy/Tnd/Ent/Prf), activa marcada por color/peso, aria-current. Fija al borde
-// inferior, respeta env(safe-area-inset-bottom). Cada item es un <NavLink>
-// (navegación) con touch target ≥44px. El toggle de tema en móvil vive en la
-// pestaña Perfil (no en la tab bar, que es solo navegación).
-//
-// La etiqueta larga es la visible (legibilidad táctil); el numeral se omite aquí.
+// (icono custom + label largo apilados, mismos iconos que el rail), activa
+// marcada por color/peso, aria-current. Fija al borde inferior, respeta
+// env(safe-area-inset-bottom). Cada item es un <NavLink> (navegación) con touch
+// target ≥44px. El toggle de tema en móvil vive en la pestaña Perfil (no en la
+// tab bar, que es solo navegación). Los iconos son aria-hidden; el label nombra.
 export function TabBar() {
   return (
     <nav
@@ -21,14 +20,15 @@ export function TabBar() {
           end={tab.to === '/'}
           className={({ isActive }) =>
             [
-              'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-[2px] pt-[8px] pb-[6px]',
+              'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-[3px] pt-[8px] pb-[6px]',
               'disp text-[11px] tracking-[0.02em]',
               'transition-[transform,color] duration-150 ease-out-ui active:scale-[0.97]',
               isActive ? 'font-semibold text-text' : 'font-medium text-text-faint',
             ].join(' ')
           }
         >
-          {tab.long}
+          <tab.Icon width={22} height={22} />
+          <span>{tab.long}</span>
         </NavLink>
       ))}
     </nav>

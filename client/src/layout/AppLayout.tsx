@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Rail } from './Rail';
 import { TabBar } from './TabBar';
-import { todayData } from '../features/today/data';
 
 // Shell de las rutas autenticadas (DESIGN.md §6).
 //
@@ -13,15 +12,12 @@ import { todayData } from '../features/today/data';
 // <Outlet>, por eso aquí solo va la cáscara de navegación. Usa min-h-[100dvh]
 // (no h-screen) por el chrome del navegador móvil (DESIGN.md §11).
 //
-// El score del Readiness compacto del rail sale de todayData (placeholder hasta
-// la sincronización biométrica real).
+// El Readiness compacto del rail va en estado "próximamente" (score=null) hasta
+// que exista su cálculo real (DESIGN.md §11b).
 export function AppLayout() {
   return (
     <div className="flex min-h-[100dvh] bg-bg lg:h-[100dvh] lg:overflow-hidden">
-      <Rail
-        readinessScore={todayData.readiness.score}
-        readinessState={todayData.readiness.state}
-      />
+      <Rail readinessScore={null} />
 
       {/* Zona de contenido: en desktop scrollea internamente; en móvil scrollea
           la página y deja hueco para la tab bar (52px + safe-area). */}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { PeakMark } from '../components/PeakMark';
 
@@ -10,12 +11,25 @@ import { PeakMark } from '../components/PeakMark';
 // Responsive mobile-first: en móvil el wordmark+sync van arriba y los controles
 // bajan a una segunda fila; el botón "Editar" se oculta en móvil (es secundario
 // y aún no funcional) para no saturar a 375px.
+//
+// El botón "Sincronizar" dispara el Atajo de iOS "SmartPeak" vía deep link
+// (estrategia "Pull", CLAUDE.md §2). No necesita callback: el hook de la pantalla
+// Hoy re-fetchea on-visibilitychange cuando el usuario vuelve del Atajo.
+
+// Nombre exacto del Atajo de iOS (CLAUDE.md §2). encodeURIComponent lo deja sin
+// espacios y a prueba de futuros renombres.
+const SHORTCUT_NAME = 'SmartPeak';
+const SHORTCUT_URL = `shortcuts://run-shortcut?name=${encodeURIComponent(
+  SHORTCUT_NAME,
+)}`;
 
 interface AppHeaderProps {
   /** Título de la pestaña (Hoy / Tendencias / …). */
   tab: string;
   /** Texto del estado de sync ("Sincronizado · hace 2 min"). Opcional. */
   syncStatus?: string;
+  /** Si false, el punto del estado de sync va atenuado (sin sincronizar). */
+  synced?: boolean;
   /** Rol legible del user (Powerlifting / Hipertrofia / Salud general). Opcional. */
   roleLabel?: string;
   /** Muestra el botón primario "Sincronizar". */
@@ -25,9 +39,22 @@ interface AppHeaderProps {
 export function AppHeader({
   tab,
   syncStatus,
+  synced = true,
   roleLabel,
   showSync = false,
 }: AppHeaderProps) {
+  // Micro-estado visual breve al lanzar el Atajo (no bloquea la navegación).
+  const [opening, setOpening] = useState(false);
+
+  const handleSync = () => {
+    setOpening(true);
+    // Dispara el Atajo de iOS. Al volver, el hook de Hoy re-fetchea solo.
+    window.location.href = SHORTCUT_URL;
+    // Reset del micro-estado por si el deep link no cambia de app (p. ej. en
+    // escritorio): no dejamos el botón en "Abriendo…" para siempre.
+    window.setTimeout(() => setOpening(false), 1500);
+  };
+
   return (
     <header className="border-b border-line">
       <div className="flex flex-col gap-3 px-[18px] pt-[16px] sm:px-[30px] lg:flex-row lg:items-end lg:justify-between lg:gap-5 lg:pb-[14px] lg:pt-[18px]">
@@ -44,7 +71,13 @@ export function AppHeader({
           </div>
           {syncStatus && (
             <p className="mt-[7px] flex items-center gap-2 font-body text-[12.5px] text-text-muted">
-              <span className="h-[7px] w-[7px] rounded-full bg-pos" aria-hidden="true" />
+              <span
+                className={[
+                  'h-[7px] w-[7px] rounded-full',
+                  synced ? 'bg-pos' : 'bg-text-faint',
+                ].join(' ')}
+                aria-hidden="true"
+              />
               {syncStatus}
             </p>
           )}
@@ -66,7 +99,11 @@ export function AppHeader({
             >
               Editar
             </Button>
-            {showSync && <Button variant="primary">Sincronizar</Button>}
+            {showSync && (
+              <Button variant="primary" onClick={handleSync}>
+                {opening ? 'Abriendo Atajo…' : 'Sincronizar'}
+              </Button>
+            )}
           </div>
         )}
       </div>

@@ -1,44 +1,146 @@
-import { Widget } from './Widget';
-import type { DeltaDirection, MetricData, MetricKey } from '../data';
+import { Widget, type WidgetSpan } from './Widget';
+import type { DeltaDirection, MetricCard, MetricKey } from '../types';
 
-// Widget de métrica REUTILIZABLE (HRV / RHR / Sueño / Pasos / Peso).
-// Mini-anillo con conic-gradient + máscara radial (como .minring del mockup) en
-// el color --m-* de la métrica. El valor va en mono con unidad pequeña en
-// --text-muted; el delta (↑/↓ %) usa señales semánticas (--pos/--neg/--text-muted).
-// El equivalente textual del anillo es la propia cifra, ya en el DOM (a11y §10).
+// Widget de métrica REUTILIZABLE con tres estados de dato (DESIGN.md §11b),
+// conservando siempre su chrome y su tamaño (no se oculta ni colapsa):
+//
+// - `data`  → cifra en mono + mini-anillo en el color --m-* de la métrica. El
+//   delta es OPCIONAL: solo si hay histórico (en esta tarea no lo hay), así que
+//   sin delta no se renderiza la zona (nada de "0%").
+// - `empty` → métrica real pero ausente hoy: cifra "—" en --text-faint, anillo en
+//   --ring-track (sin color), caption "sin dato". El label sigue legible.
+// - `soon`  → feature/métrica aún no implementada: badge mono PRÓXIMAMENTE, sin
+//   color ni cifra, atenuado pero con borde+label legibles, no interactivo.
+//
+// También un modo `loading` (skeleton que respeta la forma; nunca spinner).
 
 // Métrica → su token de color (--m-*). Cada color SOLO en su métrica (DESIGN.md §3).
+// (energy/spo2 no usan clase Tailwind; el anillo lee la var CSS por estilo inline.)
 const metricColorVar: Record<MetricKey, string> = {
-  hrv: 'var(--m-hrv)',
-  rhr: 'var(--m-rhr)',
   sleep: 'var(--m-sleep)',
+  rhr: 'var(--m-rhr)',
   steps: 'var(--m-steps)',
+  energy: 'var(--m-energy)',
+  hrv: 'var(--m-hrv)',
+  spo2: 'var(--text-faint)', // sin token propio; en próximamente no se usa color
   weight: 'var(--m-weight)',
 };
 
-// Dirección del delta → color de señal + glifo.
-const deltaMeta: Record<
-  DeltaDirection,
-  { colorVar: string; glyph: string }
-> = {
+// Dirección del delta → color de señal + glifo (solo cuando hay histórico).
+const deltaMeta: Record<DeltaDirection, { colorVar: string; glyph: string }> = {
   up: { colorVar: 'var(--pos)', glyph: '↑' },
   down: { colorVar: 'var(--neg)', glyph: '↓' },
   flat: { colorVar: 'var(--text-muted)', glyph: '' },
 };
 
+// --- Skeleton ---------------------------------------------------------------
+
+export function MetricWidgetSkeleton({
+  index = 0,
+  span = '3',
+}: {
+  index?: number;
+  span?: WidgetSpan;
+}) {
+  return (
+    <Widget span={span} index={index} ariaLabel="Cargando métrica">
+      <div className="flex items-center justify-between gap-2">
+        <span className="sp-skel h-[11px] w-[52px]" />
+      </div>
+      <div className="mt-[14px] flex items-center gap-[15px] lg:mt-auto">
+        <span className="sp-skel h-[58px] w-[58px] !rounded-full" aria-hidden="true" />
+        <span className="flex min-w-0 flex-1 flex-col gap-[8px]">
+          <span className="sp-skel h-[24px] w-[64px]" />
+          <span className="sp-skel h-[11px] w-[80px]" />
+        </span>
+      </div>
+    </Widget>
+  );
+}
+
+// --- Widget -----------------------------------------------------------------
+
 export function MetricWidget({
   data,
   index = 0,
+  span = '3',
 }: {
-  data: MetricData;
+  data: MetricCard;
   index?: number;
+  span?: WidgetSpan;
 }) {
-  const delta = deltaMeta[data.delta.direction];
+  // Próximamente: atenuado, sin color de métrica, no interactivo.
+  if (data.state === 'soon') {
+    return (
+      <Widget
+        span={span}
+        index={index}
+        ariaLabel={`${data.label}: próximamente`}
+        // aria-disabled comunica "no operable" sin que el widget sea un control.
+        ariaDisabled
+        className="opacity-60"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="eyebrow text-[10.5px]">{data.label}</span>
+          <span
+            className="mono text-[9px] font-bold tracking-[0.08em] text-text-faint"
+            aria-hidden="true"
+          >
+            PRÓXIMAMENTE
+          </span>
+        </div>
+        <div className="mt-[14px] flex items-center gap-[15px] lg:mt-auto">
+          <span
+            className="h-[58px] w-[58px] flex-shrink-0 rounded-full border-[3px] border-ring-track"
+            aria-hidden="true"
+          />
+          <span className="flex min-w-0 flex-col">
+            <span className="mono text-[27px] font-bold leading-[1.05] tracking-[-0.02em] text-text-faint">
+              —
+            </span>
+            <span className="disp mt-[4px] text-[11.5px] text-text-faint">
+              próximamente
+            </span>
+          </span>
+        </div>
+      </Widget>
+    );
+  }
+
+  // Sin dato hoy: cifra "—", anillo en track (sin color), caption "sin dato".
+  if (data.state === 'empty') {
+    return (
+      <Widget
+        span={span}
+        index={index}
+        ariaLabel={`${data.label}: sin dato`}
+        style={{ ['--ring' as string]: 'var(--ring-track)', ['--p' as string]: 0 }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="eyebrow text-[10.5px]">{data.label}</span>
+        </div>
+        <div className="mt-[14px] flex items-center gap-[15px] lg:mt-auto">
+          <span className="sp-minring" aria-hidden="true" />
+          <span className="flex min-w-0 flex-col">
+            <span className="mono text-[27px] font-bold leading-[1.05] tracking-[-0.02em] text-text-faint">
+              —
+            </span>
+            <span className="disp mt-[4px] text-[11.5px] text-text-faint">
+              {data.caption}
+            </span>
+          </span>
+        </div>
+      </Widget>
+    );
+  }
+
+  // Con dato.
+  const delta = data.delta ? deltaMeta[data.delta.direction] : null;
   const ringColor = metricColorVar[data.key];
 
   return (
     <Widget
-      span="3"
+      span={span}
       index={index}
       ariaLabel={`${data.label}: ${data.value}${data.unit ? ' ' + data.unit : ''}`}
       // --ring + --p alimentan el conic-gradient del mini-anillo (ver clase sp-minring).
@@ -47,15 +149,17 @@ export function MetricWidget({
         ['--p' as string]: data.ringPct,
       }}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex min-h-[16px] items-center justify-between gap-2">
         <span className="eyebrow text-[10.5px]">{data.label}</span>
-        <span
-          className="mono inline-flex items-center gap-[3px] text-[12px] font-bold"
-          style={{ color: delta.colorVar }}
-        >
-          {delta.glyph && <span aria-hidden="true">{delta.glyph}</span>}
-          {data.delta.label}
-        </span>
+        {delta && data.delta && (
+          <span
+            className="mono inline-flex items-center gap-[3px] text-[12px] font-bold"
+            style={{ color: delta.colorVar }}
+          >
+            {delta.glyph && <span aria-hidden="true">{delta.glyph}</span>}
+            {data.delta.label}
+          </span>
+        )}
       </div>
 
       <div className="mt-[14px] flex items-center gap-[15px] lg:mt-auto">

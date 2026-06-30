@@ -1,6 +1,6 @@
 import { Widget } from './Widget';
 import { useCountUp } from './useCountUp';
-import type { ReadinessData, ReadinessState } from '../data';
+import type { ReadinessData, ReadinessState } from '../types';
 
 // Widget firma (DESIGN.md §7) — ANILLO de progreso cuyo COLOR refleja el ESTADO de
 // recuperación (decisión 2026-06-29): verde Recuperado / ámbar Moderado / rojo
@@ -22,10 +22,54 @@ const stateMeta: Record<ReadinessState, { label: string; colorVar: string }> = {
 
 export function ReadinessWidget({
   data,
+  comingSoon = false,
   index = 0,
 }: {
-  data: ReadinessData;
+  /** Datos reales (omitidos en modo próximamente). */
+  data?: ReadinessData;
+  /** Modo "próximamente": sin cálculo aún (DESIGN.md §11b). */
+  comingSoon?: boolean;
   index?: number;
+}) {
+  if (comingSoon || !data) {
+    return (
+      <Widget
+        span="5x2"
+        index={index}
+        ariaLabel="Preparación: próximamente"
+        ariaDisabled
+        className="items-center justify-center text-center opacity-60"
+      >
+        <div className="relative flex h-[176px] w-[176px] items-center justify-center">
+          <span
+            className="h-[176px] w-[176px] rounded-full border-[13px] border-ring-track"
+            aria-hidden="true"
+          />
+          <span className="absolute mono text-[60px] font-bold leading-none tracking-[-0.03em] text-text-faint">
+            —
+          </span>
+        </div>
+        <div className="mono mt-[14px] text-[10px] font-bold tracking-[0.1em] text-text-faint">
+          PRÓXIMAMENTE
+        </div>
+        <p className="mt-[4px] font-body text-[12.5px] text-text-faint">
+          Tu Preparación llegará con el cálculo de Readiness.
+        </p>
+      </Widget>
+    );
+  }
+
+  return <ReadinessWidgetData data={data} index={index} />;
+}
+
+// Render con dato (mantiene useCountUp fuera de los returns condicionales del
+// componente público para no romper las reglas de hooks).
+function ReadinessWidgetData({
+  data,
+  index,
+}: {
+  data: ReadinessData;
+  index: number;
 }) {
   const { progress, value } = useCountUp(data.score, 800);
   const meta = stateMeta[data.state];
